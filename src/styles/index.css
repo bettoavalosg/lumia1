@@ -1,0 +1,45 @@
+/* Tokens del prototipo aprobado (prototipo/invitacion-mariela-v3.html) como tema de Tailwind v4. */
+@import "tailwindcss";
+@import "./fuentes.css";
+@import "./invitacion.css";
+
+@theme static {
+  --color-*: initial;
+  --color-noche-hondo: oklch(0.12 0.016 310);
+  --color-noche: oklch(0.15 0.014 310);
+  --color-campo: oklch(0.19 0.014 310);
+  --color-hueso: oklch(0.94 0 0);
+  --color-peltre: oklch(0.8 0.012 280);
+  --color-humo: oklch(0.68 0.012 300);
+  --color-linea: oklch(0.32 0.014 300);
+  --color-sangre-texto: oklch(0.74 0.13 22);
+  --color-sangre: oklch(0.46 0.17 22);
+  --color-cera-luz: oklch(0.62 0.17 25);
+  --color-cera-brillo: oklch(0.72 0.15 25);
+  --color-cera-sombra: oklch(0.38 0.14 22);
+  --color-cera-hondo: oklch(0.3 0.11 22);
+  --color-cera-negra: oklch(0.24 0.1 20);
+  --color-mesa: var(--color-noche-hondo);
+  --color-cartulina: color-mix(in oklch, var(--color-noche) 80%, var(--color-campo));
+  --color-plata: var(--color-peltre);
+  --font-serif: "Bodoni Moda", "Bodoni 72", Didot, Georgia, serif;
+  --font-sans: "Jost", Futura, system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-lento: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-carta: cubic-bezier(0.2, 1.1, 0.3, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --z-luz: 0;
+  --z-apagon: 1;
+  --z-contenido: 2;
+  --z-grano: 3;
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --m-ornamento: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 9'%3E%3Cpath d='M0 4.5h35M53 4.5h35' stroke='%23000' stroke-width='.8'/%3E%3Cpath d='M44 .8l3.7 3.7L44 8.2l-3.7-3.7z'/%3E%3Ccircle cx='38.5' cy='4.5' r='.9'/%3E%3Ccircle cx='49.5' cy='4.5' r='.9'/%3E%3C/svg%3E");
+  --m-rombo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M5 0l5 5-5 5-5-5z'/%3E%3C/svg%3E");
+  --m-encaje: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23000' stroke-width='.55'%3E%3Ccircle cx='0' cy='0' r='12'/%3E%3Ccircle cx='24' cy='0' r='12'/%3E%3Ccircle cx='0' cy='24' r='12'/%3E%3Ccircle cx='24' cy='24' r='12'/%3E%3Ccircle cx='12' cy='12' r='12'/%3E%3Ccircle cx='12' cy='12' r='2.4'/%3E%3C/g%3E%3Ccircle cx='12' cy='0' r='.85'/%3E%3Ccircle cx='0' cy='12' r='.85'/%3E%3Ccircle cx='24' cy='12' r='.85'/%3E%3Ccircle cx='12' cy='24' r='.85'/%3E%3C/svg%3E");
+  --opsz-display: "opsz" 18;
+  --opsz-texto: "opsz" 12;
+}

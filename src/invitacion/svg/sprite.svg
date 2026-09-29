@@ -1,0 +1,54 @@
+<defs>
+    <radialGradient id="cera-cuerpo" cx="38%" cy="30%" r="78%">
+      <stop offset="0" style="stop-color: var(--color-cera-luz)"/>
+      <stop offset=".44" style="stop-color: var(--color-sangre)"/>
+      <stop offset=".82" style="stop-color: var(--color-cera-sombra)"/>
+      <stop offset="1" style="stop-color: var(--color-cera-hondo)"/>
+    </radialGradient>
+    <linearGradient id="cera-bisel" x1=".15" y1=".1" x2=".85" y2=".9">
+      <stop offset="0" style="stop-color: var(--color-cera-brillo); stop-opacity: .95"/>
+      <stop offset=".45" style="stop-color: var(--color-sangre); stop-opacity: 0"/>
+      <stop offset="1" style="stop-color: var(--color-cera-negra); stop-opacity: .95"/>
+    </linearGradient>
+    <linearGradient id="cera-hueco" x1=".15" y1=".1" x2=".85" y2=".9">
+      <stop offset="0" style="stop-color: var(--color-cera-negra); stop-opacity: .9"/>
+      <stop offset=".5" style="stop-color: var(--color-cera-sombra); stop-opacity: 0"/>
+      <stop offset="1" style="stop-color: var(--color-cera-brillo); stop-opacity: .6"/>
+    </linearGradient>
+    <radialGradient id="cera-cara" cx="46%" cy="44%" r="60%">
+      <stop offset="0" style="stop-color: color-mix(in oklch, var(--color-sangre) 80%, var(--color-cera-sombra))"/>
+      <stop offset="1" style="stop-color: var(--color-cera-sombra)"/>
+    </radialGradient>
+    <filter id="cera-suave" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter>
+    <filter id="cera-fino" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation=".7"/></filter>
+    <clipPath id="cera-clip"><path d="M217.5 120.0C217.7 124.2 217.2 128.5 216.4 132.7C215.7 136.9 214.6 141.0 213.2 145.0C211.8 148.9 209.8 152.7 208.0 156.4C206.2 160.2 204.4 163.9 202.5 167.6C200.5 171.3 198.7 175.2 196.2 178.5C193.7 181.8 190.4 184.6 187.3 187.3C184.2 190.1 180.6 192.1 177.6 195.0C174.5 198.0 172.5 202.6 169.0 204.9C165.6 207.2 161.0 208.1 156.9 209.1C152.8 210.1 148.5 210.4 144.4 211.1C140.3 211.7 136.3 212.7 132.3 213.1C128.2 213.6 124.1 213.1 120.0 213.6C115.9 214.1 111.8 215.1 107.4 216.0C102.9 216.9 97.4 220.4 93.5 218.9C89.6 217.4 87.3 210.1 83.9 207.2C80.5 204.3 76.7 203.3 73.0 201.4C69.3 199.5 65.5 197.8 61.9 195.7C58.3 193.5 54.7 191.2 51.4 188.6C48.1 185.9 44.7 183.1 42.0 179.8C39.4 176.5 37.4 172.6 35.5 168.8C33.6 165.0 32.0 161.0 30.6 157.0C29.3 153.0 27.8 149.0 27.2 144.9C26.6 140.7 26.9 136.4 26.9 132.3C27.0 128.1 27.4 124.1 27.5 120.0C27.7 115.9 27.7 111.9 28.1 107.9C28.4 103.9 29.0 99.9 29.6 95.8C30.2 91.7 30.5 87.4 31.4 83.3C32.3 79.2 33.1 74.7 35.2 71.0C37.2 67.4 40.7 64.5 43.6 61.4C46.5 58.3 49.6 55.5 52.7 52.7C55.7 49.8 58.6 46.8 61.9 44.2C65.2 41.7 68.8 39.6 72.4 37.5C76.0 35.4 79.6 33.3 83.4 31.7C87.2 30.0 91.2 28.7 95.2 27.5C99.2 26.4 103.3 25.4 107.5 24.8C111.6 24.1 115.8 23.5 120.0 23.6C124.2 23.7 128.3 24.7 132.5 25.4C136.6 26.1 140.6 26.9 144.7 27.8C148.8 28.7 153.1 29.3 157.0 30.8C160.8 32.3 164.6 34.5 168.1 36.7C171.6 39.0 175.0 41.5 178.2 44.2C181.3 46.9 184.5 49.7 187.2 52.8C189.8 56.0 192.0 59.6 194.2 63.1C196.5 66.5 198.7 69.9 200.7 73.4C202.7 77.0 204.6 80.6 206.3 84.3C208.0 88.0 209.2 91.8 210.7 95.7C212.2 99.6 214.2 103.4 215.3 107.5C216.4 111.5 217.4 115.8 217.5 120.0Z"/></clipPath>
+    <symbol id="cera" viewBox="0 0 240 240">
+      <path id="cera-charco" d="M217.5 120.0C217.7 124.2 217.2 128.5 216.4 132.7C215.7 136.9 214.6 141.0 213.2 145.0C211.8 148.9 209.8 152.7 208.0 156.4C206.2 160.2 204.4 163.9 202.5 167.6C200.5 171.3 198.7 175.2 196.2 178.5C193.7 181.8 190.4 184.6 187.3 187.3C184.2 190.1 180.6 192.1 177.6 195.0C174.5 198.0 172.5 202.6 169.0 204.9C165.6 207.2 161.0 208.1 156.9 209.1C152.8 210.1 148.5 210.4 144.4 211.1C140.3 211.7 136.3 212.7 132.3 213.1C128.2 213.6 124.1 213.1 120.0 213.6C115.9 214.1 111.8 215.1 107.4 216.0C102.9 216.9 97.4 220.4 93.5 218.9C89.6 217.4 87.3 210.1 83.9 207.2C80.5 204.3 76.7 203.3 73.0 201.4C69.3 199.5 65.5 197.8 61.9 195.7C58.3 193.5 54.7 191.2 51.4 188.6C48.1 185.9 44.7 183.1 42.0 179.8C39.4 176.5 37.4 172.6 35.5 168.8C33.6 165.0 32.0 161.0 30.6 157.0C29.3 153.0 27.8 149.0 27.2 144.9C26.6 140.7 26.9 136.4 26.9 132.3C27.0 128.1 27.4 124.1 27.5 120.0C27.7 115.9 27.7 111.9 28.1 107.9C28.4 103.9 29.0 99.9 29.6 95.8C30.2 91.7 30.5 87.4 31.4 83.3C32.3 79.2 33.1 74.7 35.2 71.0C37.2 67.4 40.7 64.5 43.6 61.4C46.5 58.3 49.6 55.5 52.7 52.7C55.7 49.8 58.6 46.8 61.9 44.2C65.2 41.7 68.8 39.6 72.4 37.5C76.0 35.4 79.6 33.3 83.4 31.7C87.2 30.0 91.2 28.7 95.2 27.5C99.2 26.4 103.3 25.4 107.5 24.8C111.6 24.1 115.8 23.5 120.0 23.6C124.2 23.7 128.3 24.7 132.5 25.4C136.6 26.1 140.6 26.9 144.7 27.8C148.8 28.7 153.1 29.3 157.0 30.8C160.8 32.3 164.6 34.5 168.1 36.7C171.6 39.0 175.0 41.5 178.2 44.2C181.3 46.9 184.5 49.7 187.2 52.8C189.8 56.0 192.0 59.6 194.2 63.1C196.5 66.5 198.7 69.9 200.7 73.4C202.7 77.0 204.6 80.6 206.3 84.3C208.0 88.0 209.2 91.8 210.7 95.7C212.2 99.6 214.2 103.4 215.3 107.5C216.4 111.5 217.4 115.8 217.5 120.0Z" fill="url(#cera-cuerpo)"/>
+      <g clip-path="url(#cera-clip)">
+        <use href="#cera-charco" fill="none" stroke="url(#cera-bisel)" stroke-width="9" opacity=".7" filter="url(#cera-suave)"/>
+      </g>
+      <path d="M200.6 120.0C200.8 123.5 200.7 127.1 200.3 130.6C199.9 134.1 199.1 137.6 198.1 140.9C197.1 144.3 195.8 147.6 194.2 150.8C192.7 153.9 190.9 156.9 189.0 159.9C187.1 162.8 185.0 165.6 182.9 168.2C180.7 170.9 178.4 173.5 176.0 176.0C173.6 178.5 171.1 180.9 168.4 183.1C165.7 185.3 162.9 187.3 159.9 189.1C157.0 191.0 153.8 192.6 150.6 193.9C147.4 195.3 144.1 196.4 140.7 197.3C137.4 198.2 133.9 198.9 130.4 199.4C127.0 199.8 123.5 200.1 120.0 200.2C116.5 200.2 113.0 200.1 109.5 199.8C106.0 199.4 102.5 198.8 99.1 198.0C95.7 197.1 92.3 195.9 89.1 194.5C85.9 193.1 82.8 191.4 79.9 189.5C76.9 187.6 74.2 185.4 71.5 183.2C68.9 180.9 66.4 178.4 64.1 175.9C61.7 173.4 59.5 170.8 57.3 168.1C55.2 165.4 53.2 162.6 51.3 159.7C49.4 156.8 47.6 153.7 46.2 150.6C44.7 147.4 43.3 144.2 42.3 140.8C41.3 137.5 40.5 134.0 40.1 130.5C39.6 127.1 39.5 123.5 39.5 120.0C39.6 116.5 39.9 113.0 40.4 109.5C40.9 106.1 41.6 102.6 42.6 99.2C43.5 95.9 44.6 92.5 45.9 89.3C47.2 86.1 48.8 82.9 50.5 79.9C52.3 76.9 54.3 74.0 56.5 71.3C58.7 68.6 61.1 66.0 63.7 63.7C66.2 61.3 69.0 59.2 71.8 57.1C74.6 55.1 77.5 53.3 80.5 51.5C83.4 49.8 86.5 48.1 89.6 46.7C92.8 45.2 96.0 43.8 99.3 42.7C102.6 41.6 106.0 40.7 109.5 40.0C112.9 39.4 116.5 39.1 120.0 39.0C123.5 39.0 127.1 39.3 130.5 39.9C134.0 40.4 137.5 41.3 140.8 42.4C144.1 43.4 147.4 44.7 150.6 46.2C153.7 47.6 156.8 49.2 159.8 51.0C162.8 52.8 165.7 54.7 168.5 56.8C171.3 58.9 173.9 61.2 176.4 63.6C178.9 66.0 181.2 68.7 183.3 71.5C185.3 74.2 187.2 77.2 188.9 80.2C190.6 83.2 192.1 86.4 193.4 89.6C194.8 92.8 195.9 96.1 196.9 99.4C197.9 102.7 198.8 106.1 199.4 109.5C200.0 113.0 200.5 116.5 200.6 120.0Z" fill="none" stroke="url(#cera-bisel)" stroke-width="16" opacity=".85" filter="url(#cera-suave)"/>
+      <circle cx="120" cy="120" r="63" fill="url(#cera-cara)"/>
+      <circle cx="120" cy="120" r="63" fill="none" stroke="url(#cera-hueco)" stroke-width="7" filter="url(#cera-suave)"/>
+      <circle cx="120" cy="121" r="55.5" fill="none" style="stroke: var(--color-cera-brillo)" stroke-width="1" opacity=".35"/>
+      <circle cx="120" cy="120" r="55.5" fill="none" style="stroke: var(--color-cera-hondo)" stroke-width="1.5"/>
+      <circle cx="120" cy="120.8" r="49" fill="none" style="stroke: var(--color-cera-brillo)" stroke-width="2" stroke-linecap="round" stroke-dasharray=".01 5.13" opacity=".35"/>
+      <circle cx="120" cy="120" r="49" fill="none" style="stroke: var(--color-cera-hondo)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray=".01 5.13"/>
+      <text x="121" y="147.5" text-anchor="middle" opacity=".55" style="fill: var(--color-cera-brillo); font-family: var(--font-serif); font-style: italic; font-weight: 600; font-size: 76px; font-variation-settings: 'opsz' 14">M</text>
+      <text x="120" y="146" text-anchor="middle" style="fill: var(--color-cera-hondo); font-family: var(--font-serif); font-style: italic; font-weight: 600; font-size: 76px; font-variation-settings: 'opsz' 14">M</text>
+      <path d="M58 92A70 70 0 0 1 96 52" fill="none" style="stroke: oklch(0.86 0.08 25)" stroke-width="3.2" stroke-linecap="round" opacity=".45" filter="url(#cera-fino)"/>
+      <path d="M66 76A70 70 0 0 1 78 63" fill="none" style="stroke: oklch(0.95 0.03 25)" stroke-width="1.8" stroke-linecap="round" opacity=".7"/>
+      <path d="M44 86A84 84 0 0 1 58 62" fill="none" style="stroke: oklch(0.9 0.06 25)" stroke-width="1.6" stroke-linecap="round" opacity=".35" filter="url(#cera-fino)"/>
+    </symbol>
+    <linearGradient id="destello" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" style="stop-color: oklch(0.97 0.03 25); stop-opacity: 0"/>
+      <stop offset=".5" style="stop-color: oklch(0.97 0.03 25); stop-opacity: .45"/>
+      <stop offset="1" style="stop-color: oklch(0.97 0.03 25); stop-opacity: 0"/>
+    </linearGradient>
+    <symbol id="blason" viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r="37.5" fill="none" stroke="currentColor" stroke-width=".7"/>
+      <circle cx="40" cy="40" r="33.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-dasharray=".01 3.518"/>
+      <text x="40.6" y="47.5" text-anchor="middle" style="fill: currentColor; font-family: var(--font-serif); font-style: italic; font-weight: 500; font-size: 31px; font-variation-settings: 'opsz' 14">M</text>
+      <text x="40.9" y="60.5" text-anchor="middle" style="fill: currentColor; font-family: var(--font-sans); font-weight: 500; font-size: 5.6px; letter-spacing: 1.6px">XXIX</text>
+    </symbol>
+  </defs>

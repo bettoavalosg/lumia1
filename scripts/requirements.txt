@@ -1,0 +1,3 @@
+# Scripts de automatización (Python 3.10 o más reciente).
+# Después de instalar: python -m playwright install chromium
+playwright>=1.49

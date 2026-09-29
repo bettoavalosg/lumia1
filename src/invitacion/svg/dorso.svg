@@ -1,0 +1,24 @@
+<defs>
+              <mask id="luna-m"><rect width="280" height="480" fill="#fff"/><circle cx="159" cy="229" r="40" fill="#000"/></mask>
+              <path id="estrella" d="M0-7L1.4-1.4L7 0L1.4 1.4L0 7L-1.4 1.4L-7 0L-1.4-1.4Z"/>
+              <path id="rombo" d="M0-4L4 0L0 4L-4 0Z"/>
+            </defs>
+            <rect x="9" y="9" width="262" height="462" rx="10" fill="none" stroke="currentColor"/>
+            <rect x="17" y="17" width="246" height="446" rx="6" fill="none" stroke="currentColor" stroke-width=".6" opacity=".55"/>
+            <g fill="currentColor" opacity=".8">
+              <use href="#rombo" transform="translate(30 30)"/><use href="#rombo" transform="translate(250 30)"/>
+              <use href="#rombo" transform="translate(30 450)"/><use href="#rombo" transform="translate(250 450)"/>
+            </g>
+            <text x="140" y="66" text-anchor="middle">XXIX</text>
+            <g stroke="currentColor" stroke-width=".8" opacity=".6"><line x1="140.0" y1="144.0" x2="140.0" y2="122.0"/><line x1="164.8" y1="147.3" x2="167.7" y2="136.6"/><line x1="188.0" y1="156.9" x2="199.0" y2="137.8"/><line x1="207.9" y1="172.1" x2="215.7" y2="164.3"/><line x1="223.1" y1="192.0" x2="242.2" y2="181.0"/><line x1="232.7" y1="215.2" x2="243.4" y2="212.3"/><line x1="236.0" y1="240.0" x2="258.0" y2="240.0"/><line x1="232.7" y1="264.8" x2="243.4" y2="267.7"/><line x1="223.1" y1="288.0" x2="242.2" y2="299.0"/><line x1="207.9" y1="307.9" x2="215.7" y2="315.7"/><line x1="188.0" y1="323.1" x2="199.0" y2="342.2"/><line x1="164.8" y1="332.7" x2="167.7" y2="343.4"/><line x1="140.0" y1="336.0" x2="140.0" y2="358.0"/><line x1="115.2" y1="332.7" x2="112.3" y2="343.4"/><line x1="92.0" y1="323.1" x2="81.0" y2="342.2"/><line x1="72.1" y1="307.9" x2="64.3" y2="315.7"/><line x1="56.9" y1="288.0" x2="37.8" y2="299.0"/><line x1="47.3" y1="264.8" x2="36.6" y2="267.7"/><line x1="44.0" y1="240.0" x2="22.0" y2="240.0"/><line x1="47.3" y1="215.2" x2="36.6" y2="212.3"/><line x1="56.9" y1="192.0" x2="37.8" y2="181.0"/><line x1="72.1" y1="172.1" x2="64.3" y2="164.3"/><line x1="92.0" y1="156.9" x2="81.0" y2="137.8"/><line x1="115.2" y1="147.3" x2="112.3" y2="136.6"/></g>
+            <circle cx="140" cy="240" r="90" fill="none" stroke="currentColor"/>
+            <circle cx="140" cy="240" r="82" fill="none" stroke="currentColor" stroke-width=".7" stroke-dasharray="1 5" opacity=".7"/>
+            <circle cx="140" cy="240" r="48" fill="currentColor" mask="url(#luna-m)"/>
+            <g fill="currentColor">
+              <use href="#estrella" transform="translate(180 262) scale(.75)"/>
+              <use href="#estrella" transform="translate(62 116) scale(.55)"/>
+              <use href="#estrella" transform="translate(218 116) scale(.55)"/>
+              <use href="#estrella" transform="translate(62 364) scale(.55)"/>
+              <use href="#estrella" transform="translate(218 364) scale(.55)"/>
+            </g>
+            <text x="140" y="428" text-anchor="middle" class="xo">XOXO</text>
