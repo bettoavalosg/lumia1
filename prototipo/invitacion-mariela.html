@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#110d14">
+<title>Mariela cumple 29</title>
+<meta name="description" content="…y esta noche alguien no va a salir viva. XOXO">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Hay una fiesta en la Ciudad de México…">
+<meta property="og:description" content="…y esta noche alguien no va a salir viva. XOXO">
+<!-- TODO: og:image 1200x630 (el sello sobre negro), alojada con URL absoluta. Es lo primero que se ve en WhatsApp. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+:root {
+  --noche: oklch(0.15 0.014 310);
+  --noche-hondo: oklch(0.12 0.016 310);
+  --campo: oklch(0.19 0.014 310);
+  --hueso: oklch(0.94 0 0);
+  --peltre: oklch(0.8 0.012 280);
+  --humo: oklch(0.68 0.012 300);
+  --linea: oklch(0.32 0.014 300);
+  --sangre: oklch(0.46 0.17 22);
+  --sangre-texto: oklch(0.74 0.13 22);
+  --serif: "Bodoni Moda", "Bodoni 72", Didot, Georgia, serif;
+  --sans: "Jost", Futura, system-ui, sans-serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --r: 2px;
+  --r-objeto: 14px;
+  --z-grano: 1;
+  --z-contenido: 2;
+  --z-sobre: 10;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--noche); color-scheme: dark; }
+body {
+  margin: 0; min-height: 100dvh;
+  background: var(--noche); color: var(--hueso);
+  font-family: var(--sans); font-size: 1.0625rem; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: var(--z-grano); opacity: .07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:focus-visible { outline: 2px solid var(--peltre); outline-offset: 4px; }
+[hidden] { display: none !important; }
+[tabindex="-1"]:focus { outline: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- Sobre sellado (solo con JS; sin JS el contenido es visible) ---------- */
+.sobre { display: none; }
+.js .sobre {
+  position: fixed; inset: 0; z-index: var(--z-sobre);
+  display: grid; place-content: center; justify-items: center; gap: 2rem;
+  background: var(--noche); padding: 2rem; text-align: center;
+  transition: opacity .7s var(--ease) .35s, visibility 0s linear 1.05s;
+}
+.sobre.abierto { opacity: 0; visibility: hidden; }
+.sobre-hint { margin: 0; color: var(--humo); font-size: .9375rem; }
+
+.push {
+  position: absolute; left: 50%; top: max(1rem, env(safe-area-inset-top));
+  width: min(22rem, calc(100% - 2rem));
+  display: grid; grid-template-columns: 2.5rem 1fr; gap: .75rem; align-items: center;
+  padding: .8rem .9rem; text-align: left;
+  background: oklch(0.22 0.014 310); border: 1px solid var(--linea); border-radius: var(--r-objeto);
+  box-shadow: 0 14px 34px oklch(0 0 0 / .45);
+  transform: translate(-50%, -150%);
+  transition: transform .75s var(--ease);
+}
+.sobre.listo .push { transform: translate(-50%, 0); }
+.sobre.abierto .push { transform: translate(-50%, -150%); transition-duration: .4s; }
+.push-avatar {
+  width: 2.5rem; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: var(--noche); border: 1px solid var(--linea); color: var(--peltre);
+  font-family: var(--serif); font-style: italic; font-size: 1.25rem;
+}
+.push-texto { display: grid; gap: .1rem; font-size: .9375rem; line-height: 1.35; }
+.push-meta { display: flex; justify-content: space-between; gap: 1rem; font-size: .8125rem; color: var(--humo); }
+.push-meta b { color: var(--hueso); font-weight: 500; }
+
+.sello {
+  position: relative; width: clamp(7.5rem, 34vw, 9.5rem); aspect-ratio: 1;
+  border: 0; padding: 0; background: none; cursor: pointer;
+  border-radius: 48% 52% 50% 50% / 50% 46% 54% 50%;
+  box-shadow: 0 14px 34px oklch(0 0 0 / .55);
+  transition: transform .15s var(--ease), box-shadow .5s var(--ease);
+}
+.sello:active { transform: scale(.96); }
+.mitad {
+  position: absolute; inset: 0; border-radius: inherit;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(circle at 34% 28%, oklch(0.62 0.17 25 / .9) 0 7%, transparent 32%),
+    radial-gradient(circle, var(--sangre) 0 50%, oklch(0.38 0.14 22) 52% 57%, var(--sangre) 60%);
+  box-shadow: inset 0 -7px 16px oklch(0.24 0.1 20 / .75), inset 0 5px 10px oklch(0.72 0.15 25 / .3);
+  transition: transform .8s var(--ease), opacity .45s ease .3s;
+}
+.izq { clip-path: polygon(0 0, 53% 0, 47% 21%, 55% 40%, 46% 59%, 53% 78%, 48% 100%, 0 100%); }
+.der { clip-path: polygon(53% 0, 100% 0, 100% 100%, 48% 100%, 53% 78%, 46% 59%, 55% 40%, 47% 21%); }
+.monograma {
+  font-family: var(--serif); font-style: italic; font-weight: 500;
+  font-size: clamp(3rem, 14vw, 4rem); line-height: 1;
+  color: oklch(0.3 0.11 22); text-shadow: 0 1px 0 oklch(0.64 0.16 25 / .55);
+}
+.sello.roto { box-shadow: 0 14px 34px oklch(0 0 0 / 0); }
+.sello.roto .izq { transform: translate(-22%, 8%) rotate(-16deg); opacity: 0; }
+.sello.roto .der { transform: translate(22%, 5%) rotate(13deg); opacity: 0; }
+
+/* ---------- Carta ---------- */
+main {
+  position: relative; z-index: var(--z-contenido);
+  max-width: 40rem; padding: 0 1.5rem 5rem;
+}
+@media (min-width: 56rem) { main { margin-left: clamp(2rem, 10vw, 11rem); } }
+h1, h2, h3, .remate, .narrador, .datos dd, .firma, .sentencia { font-family: var(--serif); font-optical-sizing: auto; font-weight: 400; }
+.apertura {
+  min-height: 92dvh; display: flex; flex-direction: column; justify-content: space-between; gap: 3rem;
+  padding: max(2rem, env(safe-area-inset-top)) 0 3.5rem;
+}
+.para { margin: 0; font-family: var(--serif); font-style: italic; font-size: 1.125rem; color: var(--peltre); }
+h1 { margin: 0; font-size: clamp(2.5rem, 9vw, 5.25rem); line-height: 1.02; letter-spacing: -0.02em; text-wrap: balance; }
+.remate {
+  margin: 1.25rem 0 0; padding-bottom: .1em;
+  font-style: italic; font-size: clamp(1.6rem, 5.6vw, 3rem); line-height: 1.12;
+  color: var(--peltre); text-wrap: balance;
+}
+.js body.sellado :is(.para, h1, .remate) { opacity: 0; transform: translateY(14px); }
+.apertura :is(.para, h1, .remate) { transition: opacity 1s var(--ease), transform 1s var(--ease); }
+body.revelando .apertura .para { transition-delay: .3s; }
+body.revelando .apertura h1 { transition-delay: .55s; }
+body.revelando .apertura .remate { transition-delay: 1.9s; }
+
+.narrador {
+  margin: 0 0 6rem; font-size: clamp(1.25rem, 3.6vw, 1.5rem); line-height: 1.5;
+  max-width: 32ch; text-wrap: pretty;
+}
+h2 { margin: 0 0 1.5rem; font-size: clamp(1.9rem, 6vw, 2.75rem); line-height: 1.1; letter-spacing: -0.01em; text-wrap: balance; }
+
+/* Tu carta */
+.destino { margin: 0 0 7rem; display: grid; justify-items: center; text-align: center; }
+.destino h2 { margin-bottom: 2.25rem; }
+.carta-juego {
+  position: relative; width: min(70vw, 16.5rem); aspect-ratio: 280 / 480;
+  border: 0; padding: 0; background: none; cursor: pointer;
+  border-radius: var(--r-objeto); perspective: 900px;
+}
+.carta-juego.no { animation: no .45s var(--ease); }
+@keyframes no {
+  20% { transform: translateX(-9px) rotate(-1.5deg); }
+  40% { transform: translateX(7px) rotate(1deg); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(2px); }
+}
+.carta-cuerpo {
+  position: absolute; inset: 0; display: block; overflow: hidden;
+  border-radius: var(--r-objeto);
+  background: var(--noche-hondo); color: var(--peltre);
+  box-shadow: 0 34px 60px -24px oklch(0 0 0 / .8), 0 0 0 1px var(--linea);
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .6s var(--ease);
+}
+.carta-cuerpo.inclinando { transition-duration: .12s; }
+.carta-cuerpo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(115deg, transparent 36%, oklch(0.92 0.02 280 / .17) 48%, transparent 60%);
+  background-size: 260% 100%; background-position: var(--mx, 50%) 0;
+}
+.dorso { width: 100%; height: 100%; display: block; }
+.dorso text { font-family: var(--serif); font-size: 17px; letter-spacing: .14em; fill: currentColor; }
+.dorso .xo { font-style: italic; letter-spacing: .08em; }
+.destino-texto, .reloj { text-wrap: balance; }
+.destino-texto { margin: 2.25rem 0 .5rem; font-family: var(--serif); font-style: italic; font-size: 1.3rem; color: var(--peltre); }
+.reloj { margin: 0; color: var(--humo); font-size: .9375rem; font-variant-numeric: tabular-nums; }
+.aviso { margin: .75rem 0 0; min-height: 1.6em; font-size: 1rem; }
+
+/* Datos */
+.datos { display: grid; gap: 1.5rem; margin: 0 0 6rem; border-top: 1px solid var(--linea); padding-top: 2rem; }
+.datos div { display: grid; gap: .25rem; }
+.datos dt { color: var(--humo); font-size: .9375rem; }
+.datos dd { margin: 0; font-size: 1.375rem; line-height: 1.3; }
+.datos small { display: block; margin-top: .35rem; font-family: var(--sans); font-size: .9375rem; line-height: 1.5; color: var(--humo); }
+@media (min-width: 40rem) {
+  .datos div { grid-template-columns: 8.5rem 1fr; gap: 1.5rem; align-items: baseline; }
+}
+
+/* Reglas */
+.reglas { margin: 0 0 7rem; }
+.reglas ol { list-style: none; counter-reset: r; margin: 0; padding: 0; display: grid; gap: 1.25rem; max-width: 36rem; }
+.reglas li { counter-increment: r; display: grid; grid-template-columns: 2rem 1fr; }
+.reglas li::before { content: counter(r); font-family: var(--serif); font-style: italic; font-size: 1.25rem; line-height: 1.35; color: var(--peltre); }
+
+/* RSVP */
+.rsvp-pre { margin: 0; color: var(--humo); }
+.sentencia { margin: .5rem 0 1.25rem; font-size: clamp(2.3rem, 8vw, 4.25rem); line-height: 1.04; letter-spacing: -0.02em; max-width: 13ch; text-wrap: balance; }
+.rsvp-post { margin: 0 0 2rem; color: var(--humo); max-width: 34rem; }
+.conteo { margin: -1rem 0 2rem; font-family: var(--serif); font-style: italic; font-size: 1.2rem; color: var(--peltre); }
+form { display: grid; gap: 1.5rem; max-width: 30rem; }
+.campo { display: grid; gap: .4rem; }
+label { font-weight: 500; }
+.hint { margin: 0; font-size: .9375rem; color: var(--humo); line-height: 1.5; }
+input, textarea {
+  width: 100%; font: inherit; color: var(--hueso);
+  background: var(--campo); border: 1px solid var(--linea); border-radius: var(--r);
+  padding: .8rem .9rem;
+}
+textarea { min-height: 7.5rem; resize: vertical; }
+input:focus-visible, textarea:focus-visible { outline-offset: 2px; border-color: var(--peltre); }
+[aria-invalid="true"] { border-color: var(--sangre-texto); }
+.error { margin: 0; font-size: .9375rem; color: var(--sangre-texto); }
+.error:empty { display: none; }
+.contador { justify-self: end; font-size: .8125rem; color: var(--humo); }
+.primario, .secundario { font: 500 1.0625rem/1 var(--sans); border-radius: var(--r); cursor: pointer; transition: background-color .2s ease, transform .15s var(--ease); }
+.primario { justify-self: start; background: var(--hueso); color: var(--noche); border: 0; padding: 1rem 2.25rem; }
+.primario:hover { background: var(--peltre); }
+.secundario { background: none; color: var(--hueso); border: 1px solid var(--peltre); padding: .9rem 1.5rem; margin-top: 1.25rem; }
+.secundario:hover { background: var(--campo); }
+.primario:active, .secundario:active { transform: scale(.98); }
+
+.sellado-t { margin: 0 0 1rem; color: var(--humo); }
+.sellado-txt { margin: 0; max-width: 30rem; font-family: var(--serif); font-style: italic; font-size: 1.375rem; line-height: 1.65; }
+.sellado-txt span { position: relative; display: inline-block; margin-right: .3em; }
+.sellado-txt span::after {
+  content: ""; position: absolute; left: -.08em; right: -.08em; top: .22em; bottom: .14em;
+  background: var(--hueso); transform: scaleX(0); transform-origin: left;
+  transition: transform .3s var(--ease) calc(var(--i) * 35ms);
+}
+.sellado.tachar .sellado-txt span::after { transform: scaleX(1); }
+.aceptado { max-width: 30rem; }
+.aceptado h3 { margin: 0 0 .75rem; font-size: 2rem; line-height: 1.15; }
+.aceptado p { margin: 0; color: var(--humo); }
+
+.cierre { margin-top: 8rem; }
+.cierre p { margin: 0; font-size: 1.125rem; }
+.firma { display: block; margin-top: .5rem; font-style: italic; font-size: clamp(3.5rem, 16vw, 6rem); line-height: 1; letter-spacing: -0.03em; padding-bottom: .1em; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; transition-delay: 0s !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="sobre" id="sobre">
+  <div class="push" role="status">
+    <span class="push-avatar" aria-hidden="true">X</span>
+    <span class="push-texto">
+      <span class="push-meta"><b>Remitente desconocido</b><span>ahora</span></span>
+      <span>Tengo algo para ti. Rompe el sello.</span>
+    </span>
+  </div>
+  <button class="sello" id="sello" type="button" aria-label="Romper el sello y abrir la invitación">
+    <span class="mitad izq" aria-hidden="true"><span class="monograma">M</span></span>
+    <span class="mitad der" aria-hidden="true"><span class="monograma">M</span></span>
+  </button>
+  <p class="sobre-hint">Toca el sello</p>
+</div>
+
+<main id="carta">
+  <header class="apertura">
+    <p class="para">Para ti. Nadie más.</p>
+    <div>
+      <h1 tabindex="-1">Hay una fiesta en la Ciudad de México…</h1>
+      <p class="remate">…y esta noche alguien no va a salir viva.</p>
+    </div>
+  </header>
+
+  <p class="narrador">Mariela cumple 29 y sus amigos están convocados. Un departamento, veinte invitados y, entre ustedes, un asesino. Nadie sabe quién. Ni siquiera yo. Por ahora.</p>
+
+  <section class="destino" aria-labelledby="t-carta">
+    <h2 id="t-carta">Tu carta ya está elegida.</h2>
+    <button class="carta-juego" id="carta-juego" type="button" aria-describedby="reloj">
+      <span class="carta-cuerpo">
+        <svg class="dorso" viewBox="0 0 280 480" aria-hidden="true" focusable="false">
+          <defs>
+            <mask id="luna-m"><rect width="280" height="480" fill="#fff"/><circle cx="159" cy="229" r="40" fill="#000"/></mask>
+            <path id="estrella" d="M0-7L1.4-1.4L7 0L1.4 1.4L0 7L-1.4 1.4L-7 0L-1.4-1.4Z"/>
+            <path id="rombo" d="M0-4L4 0L0 4L-4 0Z"/>
+          </defs>
+          <rect x="9" y="9" width="262" height="462" rx="10" fill="none" stroke="currentColor"/>
+          <rect x="17" y="17" width="246" height="446" rx="6" fill="none" stroke="currentColor" stroke-width=".6" opacity=".55"/>
+          <g fill="currentColor" opacity=".8">
+            <use href="#rombo" transform="translate(30 30)"/><use href="#rombo" transform="translate(250 30)"/>
+            <use href="#rombo" transform="translate(30 450)"/><use href="#rombo" transform="translate(250 450)"/>
+          </g>
+          <text x="140" y="66" text-anchor="middle">XXIX</text>
+          <g stroke="currentColor" stroke-width=".8" opacity=".6"><line x1="140.0" y1="144.0" x2="140.0" y2="122.0"/><line x1="164.8" y1="147.3" x2="167.7" y2="136.6"/><line x1="188.0" y1="156.9" x2="199.0" y2="137.8"/><line x1="207.9" y1="172.1" x2="215.7" y2="164.3"/><line x1="223.1" y1="192.0" x2="242.2" y2="181.0"/><line x1="232.7" y1="215.2" x2="243.4" y2="212.3"/><line x1="236.0" y1="240.0" x2="258.0" y2="240.0"/><line x1="232.7" y1="264.8" x2="243.4" y2="267.7"/><line x1="223.1" y1="288.0" x2="242.2" y2="299.0"/><line x1="207.9" y1="307.9" x2="215.7" y2="315.7"/><line x1="188.0" y1="323.1" x2="199.0" y2="342.2"/><line x1="164.8" y1="332.7" x2="167.7" y2="343.4"/><line x1="140.0" y1="336.0" x2="140.0" y2="358.0"/><line x1="115.2" y1="332.7" x2="112.3" y2="343.4"/><line x1="92.0" y1="323.1" x2="81.0" y2="342.2"/><line x1="72.1" y1="307.9" x2="64.3" y2="315.7"/><line x1="56.9" y1="288.0" x2="37.8" y2="299.0"/><line x1="47.3" y1="264.8" x2="36.6" y2="267.7"/><line x1="44.0" y1="240.0" x2="22.0" y2="240.0"/><line x1="47.3" y1="215.2" x2="36.6" y2="212.3"/><line x1="56.9" y1="192.0" x2="37.8" y2="181.0"/><line x1="72.1" y1="172.1" x2="64.3" y2="164.3"/><line x1="92.0" y1="156.9" x2="81.0" y2="137.8"/><line x1="115.2" y1="147.3" x2="112.3" y2="136.6"/></g>
+          <circle cx="140" cy="240" r="90" fill="none" stroke="currentColor"/>
+          <circle cx="140" cy="240" r="82" fill="none" stroke="currentColor" stroke-width=".7" stroke-dasharray="1 5" opacity=".7"/>
+          <circle cx="140" cy="240" r="48" fill="currentColor" mask="url(#luna-m)"/>
+          <g fill="currentColor">
+            <use href="#estrella" transform="translate(180 262) scale(.75)"/>
+            <use href="#estrella" transform="translate(62 116) scale(.55)"/>
+            <use href="#estrella" transform="translate(218 116) scale(.55)"/>
+            <use href="#estrella" transform="translate(62 364) scale(.55)"/>
+            <use href="#estrella" transform="translate(218 364) scale(.55)"/>
+          </g>
+          <text x="140" y="428" text-anchor="middle" class="xo">XOXO</text>
+        </svg>
+      </span>
+      <span class="sr-only">Intentar voltear tu carta</span>
+    </button>
+    <p class="destino-texto">Inocente o asesino. Ni yo sé cuál te tocó.</p>
+    <p class="reloj" id="reloj"></p>
+    <p class="aviso" id="aviso" aria-live="polite"></p>
+  </section>
+
+  <dl class="datos">
+    <div>
+      <dt>Cuándo</dt>
+      <dd>Sábado 24 de octubre, 6:00 pm<small>Llega a tiempo. Sin carta no juegas.</small></dd>
+    </div>
+    <div>
+      <dt>Dónde</dt>
+      <dd>Se revela unos días antes.<small>Es un secreto que todavía no voy a contar.</small></dd>
+    </div>
+    <div>
+      <dt>Qué ponerte</dt>
+      <dd>All black. Literal.<small>Negro de pies a cabeza. Si llegas con color, todos lo van a notar.</small></dd>
+    </div>
+  </dl>
+
+  <section class="reglas" aria-labelledby="t-reglas">
+    <h2 id="t-reglas">Las reglas de la noche</h2>
+    <ol>
+      <li><span>Al llegar, tu celular te da una carta: inocente o asesino. No se la enseñes a nadie.</span></li>
+      <li><span>Cada 20 minutos se abre la votación. Todos votan por quien creen que es el asesino.</span></li>
+      <li><span>Si aciertan, el asesino se toma un shot y se reparten cartas nuevas. Si fallan, quienes votaron mal se toman un shot, sale a la luz un secreto y el asesino elige a su siguiente víctima.</span></li>
+    </ol>
+  </section>
+
+  <section class="rsvp" aria-labelledby="t-rsvp">
+    <p class="rsvp-pre">Cada invitado deja un secreto de alguien más.</p>
+    <h2 class="sentencia" id="t-rsvp">Alguien va a escribir uno sobre ti.</h2>
+    <p class="rsvp-post">La única forma de defenderte es estar ahí. Para aceptar, deja tu nombre y un secreto de otro invitado.</p>
+    <p class="conteo" id="conteo" hidden></p>
+
+    <form id="form" novalidate>
+      <div class="campo">
+        <label for="nombre">Tu nombre</label>
+        <input id="nombre" name="nombre" autocomplete="name" aria-describedby="e-nombre">
+        <p class="error" id="e-nombre" aria-live="polite"></p>
+      </div>
+      <div class="campo">
+        <label for="sobre-quien">¿De quién es el secreto?</label>
+        <p class="hint" id="h-quien">Otro invitado. El tuyo no cuenta.</p>
+        <input id="sobre-quien" name="sobre_quien" autocomplete="off" aria-describedby="h-quien e-quien">
+        <p class="error" id="e-quien" aria-live="polite"></p>
+      </div>
+      <div class="campo">
+        <label for="secreto">El secreto</label>
+        <p class="hint" id="h-secreto">Anónimo. Solo sale a la luz si el grupo falla, y se revisa antes de entrar al juego. Que dé risa, no que termine amistades.</p>
+        <textarea id="secreto" name="secreto" maxlength="280" aria-describedby="h-secreto e-secreto"></textarea>
+        <span class="contador" id="contador" aria-hidden="true">0 / 280</span>
+        <p class="error" id="e-secreto" aria-live="polite"></p>
+      </div>
+      <button type="submit" class="primario">Acepto</button>
+    </form>
+
+    <div class="sellado" id="sellado" hidden aria-hidden="true">
+      <p class="sellado-t">Sellando tu secreto</p>
+      <p class="sellado-txt" id="sellado-txt"></p>
+    </div>
+
+    <div class="aceptado" id="aceptado" hidden tabindex="-1">
+      <h3>Aceptaste, <span id="a-nombre"></span>.</h3>
+      <p>Tu secreto quedó sellado. Nadie va a saber que fuiste tú.</p>
+      <button type="button" class="secundario" id="calendario">Agregar al calendario</button>
+    </div>
+  </section>
+
+  <footer class="cierre">
+    <p>Nos vemos el 24, de luto riguroso.</p>
+    <span class="firma">XOXO</span>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = id => document.getElementById(id);
+  const body = document.body;
+
+  // TODO(Supabase): leer el conteo real de secretos guardados.
+  const ESTADO = { secretos: 0 };
+
+  /* Sobre sellado */
+  const sobre = $('sobre'), sello = $('sello'), carta = $('carta');
+  body.classList.add('sellado');
+  carta.inert = true;
+  setTimeout(() => sobre.classList.add('listo'), reduce ? 0 : 700);
+  sello.addEventListener('click', () => {
+    sello.classList.add('roto');
+    sobre.classList.add('abierto');
+    carta.inert = false;
+    requestAnimationFrame(() => {
+      body.classList.add('revelando');
+      body.classList.remove('sellado');
+    });
+    setTimeout(() => carta.querySelector('h1').focus({ preventScroll: true }), 900);
+  }, { once: true });
+
+  /* Cuenta regresiva de la carta (CDMX, UTC-6) */
+  const fiesta = new Date('2026-10-24T18:00:00-06:00').getTime();
+  const reloj = $('reloj');
+  const pl = (n, s, p) => `${n} ${n === 1 ? s : p}`;
+  const tic = () => {
+    const ms = fiesta - Date.now();
+    if (ms <= 0) { reloj.textContent = 'Ya se puede voltear. Corre.'; return false; }
+    const t = Math.floor(ms / 1000);
+    const d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+    const partes = [d ? pl(d, 'día', 'días') : null, pl(h, 'hora', 'horas'), pl(m, 'minuto', 'minutos')].filter(Boolean);
+    reloj.textContent = `Se voltea en ${partes.join(', ')} y ${pl(s, 'segundo', 'segundos')}.`;
+    return true;
+  };
+  if (tic()) { const iv = setInterval(() => { if (!tic()) clearInterval(iv); }, 1000); }
+
+  /* La carta no se deja voltear */
+  const cartaBtn = $('carta-juego'), cuerpo = cartaBtn.querySelector('.carta-cuerpo'), aviso = $('aviso');
+  const negativas = ['Todavía no.', 'Dije que todavía no.', 'Se voltea el 24 a las 6:00 pm. Ni un minuto antes.', 'Qué ganas de saber, ¿no?'];
+  let intentos = 0, avisoT;
+  cartaBtn.addEventListener('click', () => {
+    cartaBtn.classList.remove('no'); void cartaBtn.offsetWidth; cartaBtn.classList.add('no');
+    aviso.textContent = negativas[Math.min(intentos++, negativas.length - 1)];
+    clearTimeout(avisoT);
+    avisoT = setTimeout(() => { aviso.textContent = ''; }, 3200);
+  });
+  if (!reduce) {
+    const set = (rx, ry, mx) => {
+      cuerpo.style.setProperty('--rx', rx); cuerpo.style.setProperty('--ry', ry); cuerpo.style.setProperty('--mx', mx);
+    };
+    cartaBtn.addEventListener('pointermove', e => {
+      const r = cartaBtn.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      cuerpo.classList.add('inclinando');
+      set(`${-y * 16}deg`, `${x * 16}deg`, `${(x + .5) * 100}%`);
+    });
+    const soltar = () => { cuerpo.classList.remove('inclinando'); set('0deg', '0deg', '50%'); };
+    cartaBtn.addEventListener('pointerleave', soltar);
+    cartaBtn.addEventListener('pointercancel', soltar);
+  }
+
+  /* Conteo de secretos (solo si hay datos reales) */
+  if (ESTADO.secretos > 0) {
+    const c = $('conteo');
+    c.textContent = `${pl(ESTADO.secretos, 'secreto guardado', 'secretos guardados')} hasta ahora.`;
+    c.hidden = false;
+  }
+
+  /* RSVP */
+  const form = $('form');
+  const f = { nombre: $('nombre'), quien: $('sobre-quien'), secreto: $('secreto') };
+  const err = { nombre: $('e-nombre'), quien: $('e-quien'), secreto: $('e-secreto') };
+  const contador = $('contador');
+  f.secreto.addEventListener('input', () => { contador.textContent = `${f.secreto.value.length} / 280`; });
+  const norm = s => s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const v = { nombre: f.nombre.value.trim(), quien: f.quien.value.trim(), secreto: f.secreto.value.trim() };
+    const errores = {};
+    if (!v.nombre) errores.nombre = 'Escribe tu nombre.';
+    if (!v.quien) errores.quien = 'Escribe de quién es el secreto.';
+    else if (v.nombre && norm(v.quien) === norm(v.nombre)) errores.quien = 'Tiene que ser de otro invitado.';
+    if (!v.secreto) errores.secreto = 'Escribe el secreto.';
+    for (const k of Object.keys(f)) {
+      err[k].textContent = errores[k] || '';
+      f[k].setAttribute('aria-invalid', errores[k] ? 'true' : 'false');
+    }
+    const primero = Object.keys(f).find(k => errores[k]);
+    if (primero) { f[primero].focus(); return; }
+
+    // TODO(Supabase): insert en players { name } y en secrets
+    // { author_id, about_name, body, status: 'pendiente' }. Hasta entonces, modo demo.
+
+    const palabras = v.secreto.split(/\s+/);
+    $('sellado-txt').replaceChildren(...palabras.map((w, i) => {
+      const s = document.createElement('span');
+      s.textContent = w;
+      s.style.setProperty('--i', Math.min(i, 30));
+      return s;
+    }));
+    $('a-nombre').textContent = v.nombre;
+    form.hidden = true;
+    const sellado = $('sellado'), ok = $('aceptado');
+    sellado.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => sellado.classList.add('tachar')));
+    setTimeout(() => {
+      sellado.hidden = true;
+      ok.hidden = false;
+      ok.focus();
+    }, reduce ? 0 : 1400 + Math.min(palabras.length, 30) * 35);
+  });
+
+  /* Agregar al calendario (.ics). Fin estimado: medianoche. */
+  $('calendario').addEventListener('click', () => {
+    const ics = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//XOXO//Mariela 29//ES',
+      'BEGIN:VEVENT', 'UID:mariela-29-20261024@xoxo', 'DTSTAMP:20260928T000000Z',
+      'DTSTART:20261025T000000Z', 'DTEND:20261025T060000Z',
+      'SUMMARY:Mariela cumple 29',
+      'DESCRIPTION:All black. La dirección se revela unos días antes. XOXO',
+      'END:VEVENT', 'END:VCALENDAR'
+    ].join('\r\n');
+    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'mariela-29.ics' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+})();
+</script>
+</body>
+</html>
