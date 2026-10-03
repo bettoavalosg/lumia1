@@ -10,3 +10,7 @@ __pycache__/
 *.log
 .vercel
 *.tsbuildinfo
+# Teléfonos de los invitados y el registro de los SMS (scripts/enviar_sms.py): datos personales, nunca al repo
+contactos*.csv
+invitados*.csv
+*.envios.csv

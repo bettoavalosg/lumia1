@@ -79,6 +79,52 @@ python scripts/generar_vapid.py       # imprime el par de llaves VAPID
 
 La función no se expone al público: sin el secreto compartido responde 403, y solo habla con la base por dos funciones que únicamente acepta la `service_role`.
 
+## Mandar la invitación
+
+La invitación es un enlace: `https://tu-dominio.com`. Mandarla por SMS es mandar ese enlace en un mensaje. En iMessage suele salir con la vista previa del sobre sellado; en un SMS normal es solo el texto del enlace.
+
+**Para unos 20 amigos, lo más confiable es mandarlo tú desde tu teléfono**: el mensaje sale de un número que conocen, sin filtros de spam y sin cuentas que pagar. Algo como:
+
+> Mariela cumple 29: hay fiesta en la CDMX y alguien no va a salir viva. XOXO
+> Ana, tu invitación: https://tu-dominio.com
+
+**Si prefieres que salgan solos**, `scripts/enviar_sms.py` los manda por Twilio, uno por uno y con el nombre de cada quien. Corre en tu computadora y solo usa la biblioteca estándar de Python: los teléfonos no pasan por la app ni por Supabase, y las llaves de Twilio no están en el front.
+
+1. Crea una cuenta en Twilio y consigue un número que mande SMS (o un *Messaging Service*). Una cuenta de prueba solo manda a números que hayas verificado en su consola. Revisa que México esté activado en *Messaging → Settings → Geo permissions*.
+2. Arma `contactos.csv` con una fila por invitado. Está en el `.gitignore` (como `contactos*.csv`, `invitados*.csv` y `*.envios.csv`): son datos personales, no los subas.
+
+   ```csv
+   nombre,telefono
+   Ana Torres,55 1234 5678
+   Luis,+52 1 33 9876 5432
+   ```
+
+   El nombre sale tal cual en el mensaje. Los teléfonos de México se escriben como sea (espacios, guiones, 044, +52 1…); los de otro país, con su `+`.
+3. Pon las credenciales en tu terminal (están en la consola de Twilio):
+
+   ```sh
+   export TWILIO_ACCOUNT_SID=AC…  TWILIO_AUTH_TOKEN=…  TWILIO_FROM=+1…     # o TWILIO_MESSAGING_SERVICE_SID=MG… en vez de TWILIO_FROM
+   ```
+4. **Ensayo**: no manda nada; enseña a quién, cómo le llega, cuántos SMS son y qué filas tienen un teléfono malo.
+
+   ```sh
+   python scripts/enviar_sms.py contactos.csv --url https://tu-dominio.com
+   ```
+5. Mándate uno a ti primero y, si llegó bien, a todos:
+
+   ```sh
+   python scripts/enviar_sms.py contactos.csv --url https://tu-dominio.com --enviar --solo "tu nombre"
+   python scripts/enviar_sms.py contactos.csv --url https://tu-dominio.com --enviar
+   ```
+
+Si lo corres otra vez, a quien ya se le mandó se le salta (queda en `contactos.envios.csv`); con `--reenviar` se manda de nuevo. Un envío sin respuesta queda como *incierto* y no se reintenta solo, para no mandar el mismo mensaje dos veces: mira en Twilio si salió. Cada corrida tiene un tope de 40 mensajes (`--max`) que frena un CSV equivocado. El texto se cambia con `--mensaje "…{nombre}…{url}…"` o con `--mensaje-archivo`. La dirección no va en el mensaje: se revela desde la app a la hora que fijes.
+
+Lo que conviene saber:
+
+- Con acentos o símbolos el SMS pasa a UCS-2 (70 caracteres por SMS en vez de 160), así que el mensaje de arriba son 2 SMS por persona. El ensayo te dice el total.
+- Según la guía de Twilio, en México un nombre de remitente propio hay que registrarlo y pide un mínimo de unos 1,000 SMS al mes; para unas decenas de invitados se manda desde un número. A veces los operadores retrasan o filtran los mensajes de números extranjeros: prueba con 2 o 3 personas antes, no el último día.
+- Twilio solo confirma que recibió el mensaje; si llegó, lo ves en su consola (*Monitor → Logs → Messaging*).
+
 ## Antes de la fiesta: ensayar
 
 Hay tres formas, de menos a más real:
@@ -177,6 +223,7 @@ npm install
 | `python scripts/probar_accesibilidad.py` | Las mismas pantallas con axe-core (WCAG 2.2 AA). |
 | `python scripts/comparar_prototipo.py` | La invitación contra el prototipo aprobado: mismo texto, mismo aspecto. |
 | `python scripts/ensayo.py --local` | El ensayo general con 20 invitados simulados (también contra tu proyecto real; ver arriba). |
+| `python scripts/probar_sms.py` | 15 pruebas del envío por SMS contra un Twilio de mentiras (no manda nada ni pide cuenta): teléfonos, conteo de SMS, el ensayo, el formato exacto de lo que recibe Twilio, no repetir envíos, errores, interrupciones y que los números no lleguen al repo. También validadas con mutaciones. |
 
 `python scripts/probar_todo.py` corre todas seguidas (compila una sola vez) y al final resume cuáles pasaron; con `--solo` o `--saltar` eliges pasos.
 
@@ -188,6 +235,7 @@ Otras herramientas: `python scripts/servidor_local.py` levanta la API en tu comp
 
 - **Safari de iOS y Chrome de Android reales**, ni lectores de pantalla: los teléfonos son emulaciones de Chromium.
 - **Supabase de verdad**: Realtime (`realtime.send` desde la base) y los envíos de Web Push a los servicios de Apple y Google. El cliente de Realtime se probó contra un servidor de mentiras que habla el mismo protocolo (tramas binarias y JSON), y el service worker recibió pushes entregados por el navegador; pero el primer ensayo en tu proyecto, con `scripts/ensayo.py` y tus propios teléfonos, es el que cierra el círculo. Si Realtime o el push fallaran, el juego no se cae: consulta cada 3 s.
+- **Twilio de verdad**: `scripts/enviar_sms.py` se probó contra un servidor local que contesta con el mismo formato que la API de mensajes de Twilio (ruta, autenticación, campos, errores y respuestas cortadas), pero no mandó ningún SMS. La primera vez, mándate uno a ti con `--solo`.
 
 ## Estructura
 

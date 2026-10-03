@@ -4,7 +4,7 @@
     python scripts/probar_todo.py --saltar ensayo,accesibilidad
     python scripts/probar_todo.py --solo motor,juego
 
-Pasos: motor, invitacion, juego, pantallas, accesibilidad, prototipo, ensayo, setup.
+Pasos: motor, invitacion, juego, pantallas, accesibilidad, prototipo, ensayo, sms, setup.
 Cada uno es un script de esta carpeta que también se puede correr por su cuenta (con --help ves sus opciones).
 """
 
@@ -27,6 +27,7 @@ PASOS: dict[str, list[str]] = {
     'accesibilidad': ['probar_accesibilidad.py', '--sin-build'],
     'prototipo': ['comparar_prototipo.py', '--sin-build'],
     'ensayo': ['ensayo.py', '--local'],
+    'sms': ['probar_sms.py'],
     'setup': ['generar_setup_sql.py', '--revisar'],
 }
 
