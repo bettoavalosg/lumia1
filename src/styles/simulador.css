@@ -1,0 +1,35 @@
+/* El simulador: una mesa con dos teléfonos, la tele y los controles. */
+.sim { min-height: 100dvh; padding-bottom: 2rem; }
+.sim-preparar { max-width: 26rem; margin-inline: auto; }
+.sim-campo { width: 100%; text-align: left; }
+.sim-barra { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem 1.5rem; padding: .8rem 1.2rem;
+  background: color-mix(in oklch, var(--color-mesa) 92%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-linea); }
+.sim-titulo { display: flex; align-items: center; gap: .8rem; }
+.sim-titulo b { display: block; font: italic 1.25rem/1.1 var(--font-serif); font-weight: 400; color: var(--color-hueso); }
+.sim-titulo span { display: block; margin-top: .15rem; font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--color-humo); }
+.sim-sello { width: 2rem; height: 2rem; }
+.sim-controles { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.sim-controles .primario, .sim-controles .secundario { margin: 0; padding: .8rem 1rem .8rem calc(1rem + .28em); }
+.sim-controles .secundario.peligro { color: var(--color-sangre-texto); border-color: color-mix(in oklch, var(--color-sangre-texto) 50%, transparent); }
+.sim-mesa { display: grid; grid-template-columns: repeat(2, 24.5rem) minmax(20rem, 1fr); gap: 1.6rem; padding: 1.4rem 1.2rem; justify-content: center; align-items: start; }
+.sim-telefono { display: grid; gap: .7rem; }
+.sim-selector { display: grid; gap: .3rem; }
+.sim-selector span { font-size: .66rem; letter-spacing: .28em; text-transform: uppercase; color: var(--color-humo); }
+.sim-selector select { width: 100%; padding: .5rem 0; font: italic 1.1rem var(--font-serif); color: var(--color-hueso); background: none; border: 0; border-bottom: 1px solid var(--color-humo); color-scheme: dark; }
+.sim-marco { position: relative; width: 24.5rem; max-width: 100%; height: 50rem; max-height: calc(100dvh - 9rem); overflow: hidden; border: .55rem solid oklch(0.2 0.01 310); border-radius: 2.6rem; background: var(--color-mesa); box-shadow: 0 30px 60px -30px black, 0 0 0 1px var(--color-linea); }
+.sim-marco iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--color-mesa); }
+.sim-lado { display: grid; gap: 1.4rem; min-width: 0; }
+.sim-tele { display: grid; gap: .6rem; }
+.sim-tele-caja { position: relative; width: 100%; overflow: hidden; border: .4rem solid oklch(0.2 0.01 310); border-radius: 6px; background: var(--color-mesa); box-shadow: 0 30px 60px -30px black; }
+.sim-tele-caja iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; background: var(--color-mesa); }
+.sim-admin { display: grid; gap: .8rem; justify-items: start; }
+.sim-admin-caja { width: 100%; height: 42rem; overflow: hidden; border: 1px solid var(--color-linea); border-radius: 4px; }
+.sim-admin-caja iframe { width: 100%; height: 100%; border: 0; background: var(--color-mesa); }
+.sim-pie { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; margin: 0; padding: 0 1rem; }
+@media (max-width: 78rem) {
+  .sim-mesa { grid-template-columns: repeat(2, minmax(0, 24.5rem)); }
+  .sim-lado { grid-column: 1 / -1; }
+}
+@media (max-width: 54rem) {
+  .sim-mesa { grid-template-columns: minmax(0, 24.5rem); }
+}

@@ -10,8 +10,9 @@ const GRIETA =
 const MIGAS = 7
 
 /** El sobre sobre la mesa: llega, se rompe el sello, sale la portada y el sobre se retira. */
-export function Escena({ onAbierta }: { onAbierta: () => void }) {
-  const [fase, setFase] = useState<Fase>('cargando')
+export function Escena({ onAbierta, yaAbierta = false }: { onAbierta: () => void; yaAbierta?: boolean }) {
+  // Quien ya abrió el sobre en este teléfono no tiene que romper el sello otra vez.
+  const [fase, setFase] = useState<Fase>(yaAbierta ? 'abierta' : 'cargando')
   const [presionando, setPresionando] = useState(false)
   const escena = useRef<HTMLElement>(null)
   const camara = useRef<HTMLDivElement>(null)
@@ -52,8 +53,13 @@ export function Escena({ onAbierta }: { onAbierta: () => void }) {
   useEffect(() => () => temporizadores.current.forEach(clearTimeout), [])
 
   useEffect(() => {
+    if (yaAbierta) onAbierta()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     if (!abierta) return
-    titulo.current?.focus({ preventScroll: true })
+    if (!yaAbierta) titulo.current?.focus({ preventScroll: true })
     // En escritorio la portada sigue apenas al cursor.
     const el = escena.current
     const tarjeta = portada.current

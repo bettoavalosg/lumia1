@@ -1,0 +1,116 @@
+/* La tele: lo mismo que el teléfono, en grande. Todo va en rem y Tv.tsx escala la raíz según el tamaño de la pantalla. */
+.tv { position: relative; z-index: var(--z-contenido); min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; padding: 1.6rem 3rem 1.2rem; overflow: hidden; cursor: none; }
+.tv-aviso { place-content: center; justify-items: center; text-align: center; gap: 1rem; grid-template-rows: none; }
+.tv-cab { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding-bottom: .9rem; border-bottom: 1px solid color-mix(in oklch, var(--color-linea) 70%, transparent); }
+.tv-marca { display: inline-flex; align-items: center; gap: .7rem; font: italic 1.25rem/1 var(--font-serif); font-variation-settings: var(--opsz-texto); color: var(--color-plata); }
+.tv-marca svg { width: 2.3rem; height: 2.3rem; color: var(--color-peltre); }
+/* Proyectada, la tele no necesita cursor: se esconde a los pocos segundos sin moverlo (ver usePantallaCompleta). */
+html[data-cursor-quieto], html[data-cursor-quieto] * { cursor: none !important; }
+
+/* Aunque la tele se achique para que quepa una escena apretada, las etiquetas no bajan de 11 px. */
+.tv .j-etiqueta, .tv .j-subetiqueta, .tv .tv-contexto { font-size: max(.72rem, 11px); }
+.tv-contexto { font-size: .72rem; letter-spacing: .3em; text-transform: uppercase; color: var(--color-humo); }
+.tv-conexion { margin: 0; padding: .5rem 1rem; text-align: center; font-size: .95rem; letter-spacing: .12em; text-transform: uppercase; color: var(--color-hueso); background: color-mix(in oklch, var(--color-sangre) 30%, var(--color-noche)); border-radius: 3px; }
+.tv-centro { display: grid; place-items: center; padding: 1.5rem 0; animation: j-entra .8s var(--ease-out) both; }
+.tv-escena { display: grid; justify-items: center; align-content: center; gap: 1.2rem; text-align: center; width: min(100%, 62rem); }
+.tv-gran-titulo { margin: 0; font: 400 clamp(2.4rem, 6.4vw, 5.5rem)/1.04 var(--font-serif); letter-spacing: -.015em; text-wrap: balance; font-variation-settings: var(--opsz-display); color: var(--color-hueso); }
+.tv-gran-titulo em { font-style: italic; }
+.tv .j-titulo.grande { font-size: 3rem; }
+
+.tv-cuenta-fiesta { margin: .4rem 0; font: italic 1.6rem/1.4 var(--font-serif); color: var(--color-plata); }
+.tv-cuenta-fiesta b { font: 400 2.6rem/1 var(--font-serif); font-style: normal; color: var(--color-hueso); font-variant-numeric: lining-nums proportional-nums; }
+.tv-codigo { display: grid; gap: .4rem; justify-items: center; margin: .4rem 0; padding: .8rem 2.6rem; border: 1px solid var(--color-linea); border-radius: 3px; background: color-mix(in oklch, var(--color-campo) 60%, transparent); }
+.tv-codigo b { font: 400 3.8rem/1 var(--font-serif); letter-spacing: .3em; padding-left: .3em; font-variation-settings: var(--opsz-display); color: var(--color-hueso); }
+.tv-llegados { margin: 0; font: italic 1.4rem/1 var(--font-serif); color: var(--color-plata); }
+.tv-llegados b { font: 400 3rem/1 var(--font-serif); font-style: normal; color: var(--color-hueso); margin-right: .3rem; font-variant-numeric: lining-nums proportional-nums; }
+.tv-nombres { max-width: 56rem; }
+.tv-nombres li { font-size: 1.15rem; padding: .5rem 1.05rem; }
+
+.tv-ronda { grid-template-columns: auto minmax(0, 1fr); gap: 4rem; text-align: left; width: min(100%, 78rem); align-content: center; }
+.tv-reloj { display: grid; gap: 1rem; justify-items: center; text-align: center; }
+.tv-vivos { display: grid; gap: .9rem; justify-items: start; align-content: center; }
+.tv-vivos .j-nombres { justify-content: flex-start; }
+.tv-vivos .j-subetiqueta b { font: 400 1.6rem var(--font-serif); color: var(--color-hueso); letter-spacing: 0; }
+
+.tv-sellos { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; max-width: 44rem; margin: .4rem 0; }
+.tv-sellos .cera { width: 2.3rem; height: 2.3rem; transition: opacity .5s ease, scale .5s var(--ease-carta), filter .5s ease; }
+.tv-sellos .cera.vacio { opacity: .24; scale: .78; filter: grayscale(1); }
+.tv-sellos .cera.lleno { opacity: 1; filter: drop-shadow(0 4px 6px oklch(0 0 0 / .55)); }
+.tv-votacion .j-nota b { font-size: 1.1em; color: var(--color-hueso); }
+
+/* El veredicto en horizontal: quién y por qué arriba; los votos y quién bebe a la izquierda; el secreto a la derecha. */
+.tv-veredicto { width: min(100%, 84rem); position: relative; }
+.tv-veredicto .j-revela {
+  display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); column-gap: 3.5rem; row-gap: .5rem; align-items: start;
+  grid-template-areas: "cab cab" "acu acu" "sen sen" "vot sec" "beb sec";
+}
+/* Con muchos bebedores, la lista se toma todo el ancho en vez de apilarse en la columna angosta. */
+.tv-veredicto .j-revela.muchos-beben { grid-template-areas: "cab cab" "acu acu" "sen sen" "vot sec" "beb beb"; }
+.tv-veredicto .muchos-beben .j-beben .j-nombres li { font-size: 1.05rem; padding-block: .25rem; }
+.tv-veredicto .rev-cab { grid-area: cab; }
+.tv-veredicto .rev-acu { grid-area: acu; }
+.tv-veredicto .rev-sen { grid-area: sen; }
+.tv-veredicto .rev-vot { grid-area: vot; }
+.tv-veredicto .rev-beb { grid-area: beb; }
+.tv-veredicto .rev-sec { grid-area: sec; align-self: center; }
+.tv-veredicto .j-titulo.grande { font-size: 4rem; }
+.tv-veredicto .j-sentencia { font-size: 2rem; }
+.tv-veredicto .j-votos > ul { width: 100%; }
+.tv-veredicto .j-voto-nombre { font-size: 1.3rem; }
+.tv-veredicto .j-quien { display: none; }
+.tv-veredicto .j-beben { gap: .5rem; }
+.tv-veredicto .j-beben .j-nota { display: none; }
+.tv-espera { position: absolute; top: -.4rem; right: 0; display: grid; gap: .5rem; justify-items: center; }
+.tv-veredicto > .tv-gran-titulo { font-size: 3.4rem; }
+
+/* El secreto en la tele es un "blast": la notificación anónima, la misma X de la invitación. */
+.tv .j-secreto {
+  width: min(100%, 44rem); padding: 1.3rem 1.6rem 1.2rem; text-align: left; gap: .6rem; justify-items: start; border-radius: 16px;
+  background: color-mix(in oklch, oklch(0.22 0.014 310) 88%, transparent); border-color: oklch(1 0 0 / .1);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / .07), 0 30px 60px -20px black;
+}
+.tv .j-secreto::before { display: none; }
+.tv .j-secreto .j-subetiqueta { color: var(--color-peltre); }
+.tv .j-secreto blockquote p { font-size: 2rem; }
+.tv .j-secreto figcaption { justify-self: end; font-size: 1.15rem; }
+.tv .j-beben .j-nombres li { font-size: 1.3rem; }
+
+.tv-cierre { width: min(100%, 78rem); gap: .8rem; }
+.tv-cierre .tv-gran-titulo { font-size: 3.6rem; }
+.tv-premios { width: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 4rem; row-gap: 1rem; align-items: start; text-align: left; justify-items: stretch; }
+.tv-premios .premios-cifras { grid-column: 1 / -1; text-align: center; max-width: none; justify-self: center; }
+.tv-premios .podio { width: 100%; }
+.tv-premios .podio-nombre { font-size: 1.8rem; }
+.tv-premios .podio .lugar-1 .podio-nombre { font-size: 2.6rem; }
+.tv-premios .premios-lista { grid-template-columns: 1fr; width: 100%; gap: 1.1rem; }
+.tv-premios .premio-n { font-size: 1.7rem; }
+.tv-cierre > .j-firma { font-size: 2.6rem; margin: 0; }
+
+.tv-pie { min-height: 2.4rem; display: grid; place-items: center; }
+.tv-ultima { margin: 0; font: italic 1.25rem/1.3 var(--font-serif); color: var(--color-plata); animation: j-entra .6s var(--ease-out) both; }
+.tv-ultima span { margin-left: .5rem; font-style: normal; letter-spacing: .3em; font-size: .8rem; color: var(--color-humo); }
+
+.tv-pausa { position: fixed; z-index: 30; top: 1rem; left: 50%; translate: -50% 0; padding: .55rem 1.6rem; font-size: .85rem; letter-spacing: .5em; text-transform: uppercase; color: var(--color-hueso); background: color-mix(in oklch, var(--color-campo) 94%, transparent); border: 1px solid var(--color-linea); }
+
+.tv-muerte {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-content: center; justify-items: center; gap: 1.2rem; text-align: center; padding: 3rem;
+  background: radial-gradient(90% 60% at 50% 35%, color-mix(in oklch, var(--color-sangre) 26%, var(--color-noche-hondo)), oklch(0.05 0.01 310) 78%);
+  animation: muerte-entra .9s var(--ease-lento) both;
+}
+.tv-muerte .j-muerte-sello { width: 11rem; height: 11rem; }
+.tv-muerte .tv-gran-titulo { animation: j-entra 1.1s var(--ease-out) .8s both; }
+.tv-muerte .j-firma { animation: j-entra 1s var(--ease-out) 1.6s both; }
+
+@media (max-aspect-ratio: 1/1) {
+  .tv-veredicto .j-revela { grid-template-columns: 1fr; grid-template-areas: "cab" "acu" "sen" "vot" "beb" "sec"; }
+  .tv-espera { position: static; }
+  .tv-premios { grid-template-columns: 1fr; }
+  .tv-ronda { grid-template-columns: 1fr; text-align: center; gap: 2rem; }
+  .tv-vivos { justify-items: center; }
+  .tv-vivos .j-nombres { justify-content: center; }
+  .tv-premios .premios-lista { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-centro, .tv-ultima, .tv-muerte, .tv-muerte .tv-gran-titulo, .tv-muerte .j-firma { animation: none; }
+  .tv-sellos .cera { transition: none; }
+}

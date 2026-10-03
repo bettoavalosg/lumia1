@@ -385,6 +385,8 @@ input, textarea {
   background: linear-gradient(var(--color-hueso), var(--color-hueso)) left bottom / 0% 2px no-repeat;
   transition: background-size .45s var(--ease-out), border-color .2s ease;
 }
+/* Zona de toque de 44 px sin mover nada: el campo crece hacia arriba, sobre el espacio entre el rótulo y la línea. */
+input { padding-top: calc(.4rem + 3.2px); margin-top: -3.2px; }
 input:focus-visible { background-size: 100% 2px; }
 textarea {
   display: block; min-height: calc(var(--renglon) * 4); padding: 0; resize: vertical; line-height: var(--renglon);
@@ -460,6 +462,9 @@ a.secundario { display: inline-block; text-decoration: none; }
   .suite .tarjeta { padding: 4rem 3rem 3.75rem; }
 }
 
+/* Ya abierta, la escena no conserva ninguna pieza del sobre (quien vuelve la ve directo). */
+.escena.abierta .sobre-pieza, .escena.abierta .push, .escena.abierta .sobre-hint { display: none; }
+
 /* Menos movimiento no es cero movimiento: fundidos, sin desplazamientos ni atmósfera animada */
 @media (prefers-reduced-motion: reduce) {
   body::after, .bruma, .carta-juego, .carta-sombra, .escena.listo .sobre-hint span { animation: none; }
@@ -496,3 +501,55 @@ a.secundario { display: inline-block; text-decoration: none; }
   .cierre:not(.visto) .firma { clip-path: inset(-20% -10% -20% -10%); }
 }
 @keyframes funde { from { opacity: 0; } }
+
+/* ---------- Piezas que se suman a la invitación al conectarla con el servidor ---------- */
+.enlace {
+  /* Se ve como texto subrayado, pero su zona de toque mide 44 px de alto (el margen negativo devuelve el espacio que ocupa el relleno). */
+  display: inline-block; padding: .85rem .5rem; margin: -.85rem -.5rem; border: 0; background: none; cursor: pointer; vertical-align: baseline;
+  font: inherit; font-size: .875rem; color: var(--color-peltre); text-decoration: underline; text-underline-offset: .25em;
+  text-decoration-color: color-mix(in oklch, var(--color-peltre) 45%, transparent);
+  transition: color .2s ease, text-decoration-color .2s ease;
+}
+.enlace:hover { color: var(--color-hueso); text-decoration-color: currentColor; }
+.recuperar { margin-top: 1.4rem; text-align: center; }
+.recuperar-campos { display: grid; gap: 1.4rem; text-align: left; }
+.recuperar-campos .secundario { justify-self: center; margin-top: 0; }
+.secundario:disabled { opacity: .45; cursor: default; }
+.error-general { text-align: center; }
+.llave { margin: 2.25rem auto 0; max-width: 24rem; padding: 1.25rem 1rem 1rem; text-align: center; border-top: 1px solid var(--color-linea); }
+.llave-t { margin: 0; font-size: .7rem; letter-spacing: .3em; text-transform: uppercase; color: var(--color-humo); }
+.llave-c { margin: .5rem 0 .6rem; font: 400 clamp(1.75rem, 8vw, 2.2rem)/1.1 var(--font-serif); letter-spacing: .16em; font-variation-settings: var(--opsz-display); user-select: all; }
+.llave-h { margin: 0 auto .5rem; max-width: 30ch; font-size: .875rem; color: var(--color-humo); text-wrap: pretty; }
+.secreto-estado { margin-top: 1rem; font-size: .875rem; color: var(--color-humo); }
+.reemplazo { display: grid; gap: 1.2rem; margin-top: 1.75rem; text-align: left; }
+.reemplazo-t { margin: 0; font: italic 1.15rem/1.3 var(--font-serif); color: var(--color-sangre-texto); text-align: center; }
+.reemplazo .secundario { justify-self: center; margin-top: 0; }
+.aceptado .primario { margin-top: 1.75rem; }
+.volver-noche {
+  position: fixed; z-index: 20; top: max(.75rem, env(safe-area-inset-top)); left: .75rem; padding: .55rem .85rem;
+  font: 500 .7rem/1 var(--font-sans); letter-spacing: .2em; text-transform: uppercase; color: var(--color-peltre);
+  background: color-mix(in oklch, var(--color-mesa) 80%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--color-linea); border-radius: 2px; cursor: pointer;
+}
+.pastilla-demo {
+  position: fixed; z-index: 30; left: 50%; bottom: max(.6rem, env(safe-area-inset-bottom)); translate: -50% 0; max-width: calc(100% - 1.5rem);
+  padding: .5rem .9rem; font: 500 .68rem/1 var(--font-sans); letter-spacing: .16em; text-transform: uppercase; text-decoration: none; white-space: nowrap;
+  color: var(--color-peltre); background: color-mix(in oklch, var(--color-mesa) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--color-linea); border-radius: 999px;
+}
+.pastilla-demo:hover { color: var(--color-hueso); border-color: var(--color-peltre); }
+.juego ~ .pastilla-demo { display: none; }
+/* Diagnóstico para quien está configurando el proyecto: solo aparece si Supabase no tiene el juego instalado o rechaza la clave. */
+.aviso-config {
+  position: fixed; z-index: 40; inset-inline: .75rem; bottom: max(.75rem, env(safe-area-inset-bottom)); margin: 0 auto; max-width: 34rem; padding: .85rem 1rem;
+  font: 400 .875rem/1.45 var(--font-sans); color: var(--color-hueso);
+  background: color-mix(in oklch, var(--color-sangre) 34%, var(--color-noche)); border: 1px solid color-mix(in oklch, var(--color-sangre) 55%, var(--color-linea)); border-radius: 4px;
+}
+.aviso-config b { font-weight: 600; }
+.cargando { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 1.1rem; text-align: center; padding: 2rem; position: relative; z-index: var(--z-contenido); }
+.cargando p { margin: 0; font: italic 1.2rem/1.3 var(--font-serif); color: var(--color-plata); font-variation-settings: var(--opsz-texto); }
+.cargando .cargando-nota { font: 400 .875rem/1.4 var(--font-sans); font-style: normal; color: var(--color-humo); }
+.cargando-sello { width: 4.5rem; height: 4.5rem; filter: drop-shadow(0 6px 10px oklch(0 0 0 / .5)); animation: respira-sello 2.4s ease-in-out infinite; }
+@keyframes respira-sello { 0%, 100% { scale: .94; opacity: .8; } 50% { scale: 1.02; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cargando-sello { animation: none; } }

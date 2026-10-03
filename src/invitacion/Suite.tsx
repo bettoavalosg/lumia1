@@ -7,18 +7,20 @@ import { Palabras } from './Palabras'
 import { Reloj } from './Reloj'
 import { useRevelado } from './Revelar'
 import { Rsvp } from './Rsvp'
+import { useServidor } from '../servidor/Servidor'
+import type { Estado } from '../servidor/tipos'
 
 const NEGATIVAS = ['Todavía no.', 'Dije que todavía no.', 'Se voltea el 24 a las 6:00 pm. Ni un minuto antes.', 'Qué ganas de saber, ¿no?']
 
 /** Todo lo que viene después de la portada. `orden` sigue el orden de la página para el revelado. */
-export function Suite({ abierta }: { abierta: boolean }) {
+export function Suite({ abierta, alEntrar, alCeremonia }: { abierta: boolean; alEntrar?: () => void; alCeremonia?: (enCurso: boolean) => void }) {
   return (
     <div className="suite" id="suite" inert={!abierta}>
       <Narrador orden={0} />
       <Destino orden={1} />
       <Detalles orden={3} />
       <Reglas orden={4} />
-      <Rsvp orden={5} />
+      <Rsvp orden={5} alEntrar={alEntrar} alCeremonia={alCeremonia} />
       <Cierre orden={6} />
     </div>
   )
@@ -80,6 +82,8 @@ function Destino({ orden }: { orden: number }) {
 
 function Detalles({ orden }: { orden: number }) {
   const [ref, visto] = useRevelado<HTMLElement>(orden)
+  // La dirección llega del servidor solo después de la fecha que fija el admin; antes, ni siquiera existe en el cliente.
+  const direccion = useServidor<Estado>().estado?.event.address ?? null
   return (
     <section ref={ref} className={clases('tarjeta pieza-suite dibujo repartir desde-izq', visto && 'visto')}>
       <Marco />
@@ -93,10 +97,21 @@ function Detalles({ orden }: { orden: number }) {
         </div>
         <div className="escalon" style={{ '--e': 1 }}>
           <dt>Dónde</dt>
-          {/* TODO(Fase 3): la dirección llega del servidor solo después de address_reveal_at. */}
-          <dd>
-            Se revela unos días antes.<small>Es un secreto que todavía no voy a contar.</small>
-          </dd>
+          {direccion ? (
+            <dd>
+              {direccion}
+              <small>
+                Ya no es un secreto.{' '}
+                <a className="enlace" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`} target="_blank" rel="noreferrer">
+                  Abrir en Maps
+                </a>
+              </small>
+            </dd>
+          ) : (
+            <dd>
+              Se revela unos días antes.<small>Es un secreto que todavía no voy a contar.</small>
+            </dd>
+          )}
         </div>
         <div className="escalon" style={{ '--e': 2 }}>
           <dt>Qué ponerte</dt>

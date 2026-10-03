@@ -1,0 +1,94 @@
+/* Panel de admin: mismas cartulinas y tipografías, con más densidad. */
+.admin .j-escena { padding-top: 0; }
+.ad-salir { flex: none; display: inline-flex; align-items: center; min-height: 2.75rem; padding: .4rem .6rem; background: none; border: 0; cursor: pointer; color: var(--color-humo); font: 500 .66rem/1 var(--font-sans); letter-spacing: .24em; text-transform: uppercase; text-decoration: underline; text-underline-offset: .4em; }
+.ad-salir:hover { color: var(--color-hueso); }
+.ad-banda { margin: 0; padding: .45rem 1rem; text-align: center; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--color-hueso); background: color-mix(in oklch, var(--color-sangre) 26%, var(--color-noche)); border-bottom: 1px solid color-mix(in oklch, var(--color-sangre) 50%, var(--color-linea)); }
+.ad-pestanas { position: sticky; top: calc(2.95rem + env(safe-area-inset-top)); z-index: 11; display: flex; overflow-x: auto; scrollbar-width: none; background: color-mix(in oklch, var(--color-mesa) 92%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-linea); }
+.ad-pestanas::-webkit-scrollbar { display: none; }
+.ad-pestanas button { position: relative; flex: 1 0 auto; min-height: 2.9rem; padding: .95rem .9rem .85rem; background: none; border: 0; cursor: pointer; color: var(--color-humo); font: 500 .66rem/1 var(--font-sans); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; transition: color .2s ease; }
+.ad-pestanas button[aria-current="page"] { color: var(--color-hueso); }
+.ad-pestanas button[aria-current="page"]::after { content: ""; position: absolute; left: .7rem; right: .7rem; bottom: 0; height: 2px; background: var(--color-peltre); }
+.ad-aviso { margin-left: .5rem; padding: .15rem .45rem; font: 500 .65rem/1 var(--font-sans); letter-spacing: 0; color: var(--color-noche); background: var(--color-hueso); border-radius: 999px; }
+
+.ad-cuerpo { width: min(100%, 42rem); margin-inline: auto; padding: 1.5rem 1.1rem calc(4rem + env(safe-area-inset-bottom)); display: grid; gap: 2.2rem; }
+.ad-seccion { display: grid; gap: 1rem; }
+.ad-titulo { margin: 0; font: 400 1.5rem/1.1 var(--font-serif); font-style: italic; font-variation-settings: var(--opsz-display); color: var(--color-hueso); }
+.ad-nota { margin: 0; max-width: 60ch; font-size: .88rem; line-height: 1.5; color: var(--color-humo); text-wrap: pretty; }
+.ad-resumen { margin: 0; font-size: .95rem; color: var(--color-peltre); }
+.ad-resumen b { font: 400 1.5rem var(--font-serif); color: var(--color-hueso); }
+.ad-estado { display: grid; gap: .8rem; justify-items: center; padding: 1.5rem 1rem; text-align: center; border: 1px solid var(--color-linea); border-radius: 3px; background: linear-gradient(to bottom, var(--color-cartulina), color-mix(in oklch, var(--color-cartulina) 70%, var(--color-noche-hondo))); }
+.ad-grande { margin: 0; font: 400 clamp(1.5rem, 6vw, 2rem)/1.1 var(--font-serif); font-variation-settings: var(--opsz-display); color: var(--color-hueso); text-wrap: balance; }
+.ad-acciones { display: grid; gap: .7rem; justify-items: stretch; }
+.ad-acciones .primario, .ad-acciones .secundario { margin: 0; justify-self: stretch; text-align: center; width: 100%; }
+.admin .secundario { margin-top: 0; }
+.admin .secundario:disabled, .admin .primario:disabled { opacity: .38; cursor: default; }
+.admin .secundario.peligro { color: var(--color-sangre-texto); border-color: color-mix(in oklch, var(--color-sangre-texto) 50%, transparent); }
+a.secundario { display: inline-grid; place-items: center; text-decoration: none; }
+.ad-fila-botones { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.ad-fila-botones .secundario { padding: .85rem 1.1rem .85rem calc(1.1rem + .28em); }
+
+.ad-lista-check { list-style: none; margin: 0; padding: 0; display: grid; gap: .1rem; }
+.ad-lista-check li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .75rem 0 .75rem 1.8rem; position: relative; border-bottom: 1px solid color-mix(in oklch, var(--color-linea) 60%, transparent); font-size: .92rem; color: var(--color-peltre); }
+.ad-lista-check li::before { content: ""; position: absolute; left: .2rem; top: 50%; width: .7rem; height: .7rem; translate: 0 -50%; border-radius: 50%; border: 1px solid var(--color-humo); }
+.ad-lista-check li.ok::before { background: var(--color-hueso); border-color: var(--color-hueso); }
+.ad-lista-check li.falta::before { border-color: var(--color-sangre-texto); }
+.ad-enlace { display: grid; gap: .8rem; padding: 1rem; border: 1px solid var(--color-linea); border-radius: 3px; }
+.ad-enlace code { font: 400 .8rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--color-peltre); overflow-wrap: anywhere; }
+
+.ad-invitados { list-style: none; margin: 0; padding: 0; display: grid; }
+.ad-invitado { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .6rem; align-items: center; padding: .7rem 0; border-bottom: 1px solid color-mix(in oklch, var(--color-linea) 60%, transparent); }
+.ad-invitado-info { display: grid; gap: .25rem; min-width: 0; }
+.ad-invitado-info b { font: italic 1.15rem/1.2 var(--font-serif); font-weight: 400; color: var(--color-hueso); overflow-wrap: anywhere; }
+.ad-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+.ad-chips i { padding: .15rem .5rem; font: 500 .7rem/1.3 var(--font-sans); font-style: normal; letter-spacing: .12em; text-transform: uppercase; color: var(--color-humo); border: 1px solid var(--color-linea); border-radius: 999px; }
+.ad-chips i.aviso { color: var(--color-peltre); border-color: var(--color-peltre); }
+.ad-chips i.caido { color: var(--color-sangre-texto); border-color: color-mix(in oklch, var(--color-sangre-texto) 50%, transparent); }
+.ad-interruptor { min-height: 2.75rem; padding: .55rem .8rem; min-width: 5.5rem; background: none; border: 1px solid var(--color-linea); border-radius: 999px; cursor: pointer; color: var(--color-humo); font: 500 .68rem/1 var(--font-sans); letter-spacing: .16em; text-transform: uppercase; transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+.ad-interruptor.activo { background: var(--color-hueso); border-color: var(--color-hueso); color: var(--color-noche); }
+.ad-mas { min-width: 2.75rem; min-height: 2.75rem; padding: .4rem .6rem; background: none; border: 0; cursor: pointer; color: var(--color-peltre); font: 400 1.1rem/1 var(--font-sans); letter-spacing: .1em; }
+.ad-vacio { padding: 1.2rem 0; text-align: center; color: var(--color-humo); font-size: .92rem; }
+.ad-form-linea { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: end; text-align: left; }
+.ad-form-linea .secundario { margin-bottom: .2rem; }
+.llave-c.grande { margin: .3rem 0; font: 400 2.4rem/1.1 var(--font-serif); letter-spacing: .16em; user-select: all; color: var(--color-hueso); }
+
+.ad-secretos { list-style: none; margin: 0; padding: 0; display: grid; gap: .9rem; }
+.ad-secreto { display: grid; gap: .8rem; padding: 1.1rem 1.1rem 1rem; border: 1px solid var(--color-linea); border-radius: 3px; background: linear-gradient(to bottom, var(--color-cartulina), color-mix(in oklch, var(--color-cartulina) 70%, var(--color-noche-hondo))); }
+.ad-secreto.pendiente { border-color: var(--color-peltre); }
+.ad-secreto.rechazado, .ad-secreto.revelado { opacity: .6; }
+.ad-secreto-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.ad-sello-estado { font-size: .7rem; letter-spacing: .24em; text-transform: uppercase; color: var(--color-humo); }
+.ad-secreto.pendiente .ad-sello-estado { color: var(--color-hueso); }
+.ad-secreto.aprobado .ad-sello-estado { color: var(--color-peltre); }
+.ad-sobre { font-size: .82rem; color: var(--color-humo); }
+.ad-sobre em { font: italic 1.05rem var(--font-serif); color: var(--color-plata); }
+.ad-texto { margin: 0; font: italic 1.2rem/1.45 var(--font-serif); font-variation-settings: var(--opsz-texto); color: var(--color-hueso); overflow-wrap: anywhere; }
+.ad-editar { display: grid; gap: 1rem; text-align: left; }
+
+.ad-ajustes { display: grid; gap: 2.2rem; }
+.ad-ajustes .campo { text-align: left; }
+.ad-rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem 1.4rem; }
+.ad-check { display: grid; grid-template-columns: auto 1fr; gap: .9rem; align-items: start; cursor: pointer; }
+.ad-check input { appearance: none; width: 1.4rem; height: 1.4rem; margin: .1rem 0 0; padding: 0; border: 1px solid var(--color-humo); border-radius: 2px; background: none; display: grid; place-content: center; cursor: pointer; }
+.ad-check input::after { content: ""; width: .7rem; height: .7rem; background: var(--color-hueso); scale: 0; transition: scale .2s var(--ease-carta); clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0, 43% 62%); }
+.ad-check input:checked { border-color: var(--color-hueso); }
+.ad-check input:checked::after { scale: 1; }
+.ad-check b { display: block; font-weight: 500; font-size: .95rem; color: var(--color-hueso); }
+.ad-check small { display: block; margin-top: .2rem; font-size: .82rem; line-height: 1.45; color: var(--color-humo); }
+.ad-guardar { position: sticky; bottom: calc(.8rem + env(safe-area-inset-bottom)); z-index: 6; display: grid; justify-items: center; padding: 1rem 0 .3rem; background: linear-gradient(to top, var(--color-mesa) 60%, transparent); }
+.ad-guardar .primario { margin: 0; }
+
+.ad-dios ul { list-style: none; margin: .4rem 0 0; padding: 0; display: grid; gap: .2rem; font-size: .88rem; }
+.ad-dios li { display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; padding: .3rem 0; border-bottom: 1px solid color-mix(in oklch, var(--color-linea) 50%, transparent); color: var(--color-peltre); }
+.ad-dios li em { font: italic .95rem var(--font-serif); color: var(--color-humo); }
+.ad-dios li.asesino em { color: var(--color-sangre-texto); }
+
+.ad-acceso .j-pantalla { max-width: 22rem; margin-inline: auto; }
+.ad-pin { width: min(100%, 14rem); }
+.ad-pin input { text-align: center; letter-spacing: .4em; font-size: 1.4rem; }
+
+.admin select { width: 100%; font: inherit; color: var(--color-hueso); background: none; border: 0; border-bottom: 1px solid var(--color-humo); padding: .4rem 0; }
+.admin input[type="datetime-local"], .admin input[type="search"] { color-scheme: dark; }
+
+@media (min-width: 48rem) {
+  .ad-cuerpo { padding-top: 2rem; }
+}

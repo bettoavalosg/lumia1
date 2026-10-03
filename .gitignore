@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-*/
 dev-dist/
 .env
 .env.*
@@ -8,3 +9,4 @@ dev-dist/
 __pycache__/
 *.log
 .vercel
+*.tsbuildinfo

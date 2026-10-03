@@ -1,0 +1,350 @@
+/* La noche: las pantallas del juego. Mismo lenguaje que la invitación — cartulina negra, filete de plata,
+   Bodoni para lo que se dice y Jost para lo que se hace. El rojo queda para la cera, la muerte y el golpe. */
+
+.juego { position: relative; z-index: var(--z-contenido); min-height: 100dvh; display: flex; flex-direction: column; }
+
+/* ---------- Barra superior y pestañas ---------- */
+.j-barra {
+  position: sticky; top: 0; z-index: 12; display: flex; align-items: center; gap: .75rem;
+  padding: calc(.65rem + env(safe-area-inset-top)) 1rem .65rem;
+  background: color-mix(in oklch, var(--color-mesa) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border-bottom: 1px solid color-mix(in oklch, var(--color-linea) 70%, transparent);
+}
+.j-blason { width: 1.7rem; height: 1.7rem; flex: none; color: var(--color-peltre); }
+.j-quien {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: italic 1.08rem/1.2 var(--font-serif); font-variation-settings: var(--opsz-texto); color: var(--color-hueso);
+}
+.j-estado { flex: none; font-size: .66rem; letter-spacing: .24em; text-transform: uppercase; color: var(--color-humo); }
+.j-estado.vivo { color: var(--color-peltre); }
+.j-estado.muerto { color: var(--color-sangre-texto); }
+
+.j-pestanas {
+  position: fixed; inset: auto 0 0; z-index: 14; display: grid; grid-template-columns: repeat(3, 1fr);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: color-mix(in oklch, var(--color-mesa) 92%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-top: 1px solid color-mix(in oklch, var(--color-linea) 80%, transparent);
+}
+.j-pestanas button {
+  position: relative; display: grid; justify-items: center; gap: .3rem; padding: .75rem 0 .65rem;
+  background: none; border: 0; cursor: pointer; color: var(--color-humo);
+  font: 500 .68rem/1 var(--font-sans); letter-spacing: .22em; text-transform: uppercase;
+  transition: color .2s ease, scale .15s var(--ease-out);
+}
+.j-pestanas button:active { scale: .95; }
+.j-pestanas button[aria-current="page"] { color: var(--color-hueso); }
+.j-pestanas button[aria-current="page"]::before {
+  content: ""; position: absolute; top: -1px; left: 50%; width: 1.7rem; height: 2px; translate: -50% 0; background: var(--color-peltre);
+}
+
+.j-pausa {
+  position: sticky; top: calc(2.9rem + env(safe-area-inset-top)); z-index: 11; margin: 0; padding: .55rem 1rem; text-align: center;
+  font-size: .82rem; letter-spacing: .1em; color: var(--color-hueso);
+  background: color-mix(in oklch, var(--color-campo) 94%, transparent); border-bottom: 1px solid var(--color-linea);
+}
+.j-pausa b { letter-spacing: .28em; text-transform: uppercase; font-weight: 500; margin-right: .4rem; }
+
+.j-conexion {
+  position: sticky; top: calc(2.9rem + env(safe-area-inset-top)); z-index: 11; margin: 0; padding: .5rem 1rem; text-align: center;
+  font-size: .8rem; letter-spacing: .08em; color: var(--color-hueso);
+  background: color-mix(in oklch, var(--color-sangre) 30%, var(--color-noche)); border-bottom: 1px solid color-mix(in oklch, var(--color-sangre) 50%, var(--color-linea));
+}
+.j-conexion::before, .tv-conexion::before {
+  content: ""; display: inline-block; width: .5rem; height: .5rem; margin-right: .6rem; vertical-align: .05em; border-radius: 50%;
+  background: var(--color-sangre-texto); animation: j-late 1.4s ease-in-out infinite;
+}
+@keyframes j-late { 50% { opacity: .35; } }
+
+.j-escena { flex: 1; width: min(100%, 30rem); margin-inline: auto; padding: 1.75rem 1.25rem calc(7rem + env(safe-area-inset-bottom)); }
+.j-pantalla { display: grid; gap: 1.15rem; justify-items: center; text-align: center; animation: j-entra .6s var(--ease-out) both; }
+@keyframes j-entra { from { opacity: 0; translate: 0 12px; } }
+
+/* ---------- Tipografía de la noche ---------- */
+.j-etiqueta { margin: 0; font: 500 .68rem/1.2 var(--font-sans); letter-spacing: .34em; text-transform: uppercase; color: var(--color-humo); }
+.j-etiqueta.rojo { color: var(--color-sangre-texto); }
+.j-subetiqueta { margin: 0; font: 500 .66rem/1.3 var(--font-sans); letter-spacing: .28em; text-transform: uppercase; color: var(--color-humo); }
+.j-titulo {
+  margin: 0; font: 400 clamp(1.9rem, 8vw, 2.5rem)/1.08 var(--font-serif); letter-spacing: -0.015em; text-wrap: balance;
+  font-variation-settings: var(--opsz-display); color: var(--color-hueso);
+}
+.j-titulo em, .j-texto em { font-style: italic; }
+.j-titulo.chico { font-size: clamp(1.4rem, 6vw, 1.75rem); }
+.j-titulo.grande { font-size: clamp(2.5rem, 12vw, 3.5rem); line-height: 1.02; }
+.j-texto { margin: 0; max-width: 34ch; font-size: .98rem; line-height: 1.6; color: var(--color-peltre); text-wrap: pretty; }
+.j-texto.destacado { color: var(--color-hueso); font-size: 1.06rem; }
+.j-texto.chico { font-size: .85rem; color: var(--color-humo); }
+.j-nota { margin: 0; max-width: 32ch; font-size: .92rem; line-height: 1.5; color: var(--color-humo); text-wrap: pretty; }
+.j-nota.chica { font-size: .82rem; }
+.j-nota.apagada { color: var(--color-sangre-texto); }
+.j-frase { margin: 0; max-width: 24ch; min-height: 4.3em; font: italic 1.3rem/1.4 var(--font-serif); font-variation-settings: var(--opsz-texto); color: var(--color-plata); text-wrap: balance; }
+.j-susurro { margin: .4rem 0 0; max-width: 28ch; font: italic 1.05rem/1.45 var(--font-serif); font-variation-settings: var(--opsz-texto); color: var(--color-humo); text-wrap: balance; }
+.j-sentencia { margin: 0; font: italic 1.55rem/1.25 var(--font-serif); color: var(--color-plata); text-wrap: balance; font-variation-settings: var(--opsz-texto); }
+.j-sentencia.acierto { color: var(--color-hueso); }
+.j-enlace {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: .5rem .7rem;
+  background: none; border: 0; cursor: pointer; color: var(--color-humo);
+  font: 500 .68rem/1 var(--font-sans); letter-spacing: .24em; text-transform: uppercase;
+  text-decoration: underline; text-underline-offset: .4em; text-decoration-color: color-mix(in oklch, var(--color-humo) 50%, transparent);
+}
+.j-enlace:hover { color: var(--color-hueso); }
+.j-firma { margin: .5rem 0 0; font: italic 3.4rem/1 var(--font-serif); font-variation-settings: var(--opsz-display); color: var(--color-hueso); }
+
+.juego input:not([type=checkbox]):not([type=radio]), .juego select { min-height: 2.75rem; }
+.juego .secundario { min-height: 2.75rem; }
+.juego .primario { margin-top: .4rem; }
+.juego .primario:disabled { opacity: .38; cursor: default; }
+.juego .primario:disabled::after { display: none; }
+.primario.rojo { background: var(--color-sangre); color: var(--color-hueso); }
+.primario.rojo:hover { background: var(--color-cera-luz); }
+.j-tarjeta {
+  width: 100%; padding: 1.4rem 1.2rem; text-align: center; border: 1px solid var(--color-linea); border-radius: 3px;
+  background: linear-gradient(to bottom, var(--color-cartulina), color-mix(in oklch, var(--color-cartulina) 70%, var(--color-noche-hondo)));
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / .05), 0 18px 30px -22px black;
+}
+.j-tarjeta form, form.j-tarjeta { display: grid; gap: 1.1rem; text-align: left; }
+.j-tarjeta .j-titulo, .j-tarjeta .j-texto { justify-self: center; text-align: center; }
+.j-tarjeta .secundario { justify-self: center; margin-top: .3rem; }
+
+/* ---------- La cuenta: reloj de bolsillo ---------- */
+.cuenta { --d: 13.5rem; position: relative; width: var(--d); aspect-ratio: 1; display: grid; place-items: center; flex: none; }
+.cuenta svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.cuenta .pista { fill: none; stroke: var(--color-linea); stroke-width: 1; }
+.cuenta .pista.fina { stroke-width: .6; stroke-dasharray: 1 5; opacity: .8; }
+.cuenta .progreso { fill: none; stroke: var(--color-peltre); stroke-width: 2.4; stroke-linecap: round; transition: stroke-dashoffset .25s linear, stroke .4s ease; }
+.cuenta.urgente .progreso { stroke: var(--color-sangre-texto); }
+.cuenta.pausada .progreso { stroke: var(--color-humo); }
+.cuenta .centro { position: relative; display: grid; justify-items: center; gap: .3rem; }
+.cuenta .numeros {
+  font: 400 calc(var(--d) * .27)/1 var(--font-serif); font-variant-numeric: tabular-nums lining-nums; letter-spacing: -0.01em;
+  font-variation-settings: var(--opsz-display); color: var(--color-hueso); transition: color .4s ease;
+}
+.cuenta.urgente .numeros { color: var(--color-sangre-texto); animation: latido 1s ease-in-out infinite; }
+.cuenta.pausada .numeros { color: var(--color-humo); }
+.cuenta .etiqueta { font: 500 .68rem/1 var(--font-sans); letter-spacing: .28em; text-transform: uppercase; color: var(--color-humo); }
+@keyframes latido { 50% { scale: 1.05; } }
+
+/* ---------- Nombres y fichas ---------- */
+.j-nombres { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem; }
+.j-nombres li {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .85rem; border: 1px solid var(--color-linea); border-radius: 999px;
+  font: italic .98rem/1.1 var(--font-serif); color: var(--color-plata);
+  animation: j-chip .55s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms);
+}
+@keyframes j-chip { from { opacity: 0; scale: .85; } }
+.j-nombres li.yo { border-color: var(--color-peltre); color: var(--color-hueso); }
+.j-nombres.caidos li { opacity: .75; text-decoration: line-through; text-decoration-color: color-mix(in oklch, var(--color-humo) 70%, transparent); }
+.j-nombres.bebedores li svg { width: 1rem; height: 1rem; color: var(--color-peltre); }
+
+.j-fichas { list-style: none; margin: .4rem 0 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; }
+.j-fichas li { animation: j-entra .5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 35ms); }
+.j-ficha {
+  position: relative; width: 100%; min-height: 4.4rem; padding: 1rem .75rem; display: grid; place-items: center; cursor: pointer;
+  color: var(--color-hueso); border: 1px solid var(--color-linea); border-radius: 3px;
+  background: linear-gradient(to bottom, var(--color-cartulina), color-mix(in oklch, var(--color-cartulina) 70%, var(--color-noche-hondo)));
+  transition: translate .3s var(--ease-out), border-color .2s ease, box-shadow .3s var(--ease-out), scale .15s var(--ease-out);
+}
+.j-ficha:active { scale: .97; }
+.j-ficha-nombre { font: italic 1.2rem/1.15 var(--font-serif); font-variation-settings: var(--opsz-texto); text-wrap: balance; overflow-wrap: anywhere; hyphens: auto; }
+.j-ficha-marca {
+  position: absolute; top: .4rem; right: .4rem; width: 1.2rem; height: 1.2rem; display: grid; place-items: center; border-radius: 50%;
+  background: var(--color-hueso); color: var(--color-noche); opacity: 0; scale: .4; transition: opacity .2s ease, scale .35s var(--ease-carta);
+}
+.j-ficha-marca svg { width: .8rem; height: .8rem; stroke-width: 2; }
+.j-ficha[aria-pressed="true"] {
+  translate: 0 -3px; border-color: var(--color-peltre);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-peltre) 45%, transparent), 0 16px 26px -16px black;
+}
+.j-ficha[aria-pressed="true"] .j-ficha-marca { opacity: 1; scale: 1; }
+.j-golpe .j-ficha[aria-pressed="true"] { border-color: var(--color-sangre-texto); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-sangre-texto) 50%, transparent), 0 16px 26px -16px black; }
+.j-golpe .j-ficha-marca { background: var(--color-sangre); color: var(--color-hueso); }
+
+/* ---------- Antesala ---------- */
+.j-antesala { gap: 1.3rem; }
+.j-llegada { display: grid; gap: 1.1rem; justify-items: center; width: 100%; text-align: center; }
+.j-llegada .campo { width: min(100%, 16rem); text-align: left; }
+.j-llegada input { text-transform: uppercase; letter-spacing: .3em; text-align: center; font-size: 1.3rem; }
+.j-llegados { display: grid; gap: .9rem; justify-items: center; width: 100%; margin-top: .4rem; }
+.j-contador { margin: 0; font: italic 1.1rem/1 var(--font-serif); color: var(--color-plata); }
+.j-contador b { font: 400 2rem/1 var(--font-serif); color: var(--color-hueso); font-variant-numeric: lining-nums proportional-nums; margin-right: .2rem; font-style: normal; }
+.j-reemplazo { display: grid; gap: 1rem; }
+.j-herramientas { width: 100%; display: grid; gap: .6rem; margin-top: .4rem; }
+.j-herramienta {
+  display: grid; grid-template-columns: auto 1fr; gap: .9rem; align-items: center; text-align: left; padding: .9rem 1rem; width: 100%;
+  color: var(--color-hueso); background: none; border: 1px solid var(--color-linea); border-radius: 3px; cursor: pointer;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+.j-herramienta.pasiva { cursor: default; }
+.j-herramienta:not(.pasiva):hover { border-color: var(--color-peltre); }
+.j-herramienta[aria-pressed="true"] { border-color: var(--color-peltre); background: color-mix(in oklch, var(--color-campo) 60%, transparent); }
+.j-herramienta svg { width: 1.4rem; height: 1.4rem; color: var(--color-peltre); }
+.j-herramienta b { display: block; font-weight: 500; font-size: .92rem; }
+.j-herramienta small { display: block; margin-top: .15rem; font-size: .8rem; line-height: 1.4; color: var(--color-humo); }
+
+/* ---------- Ronda ---------- */
+.j-ronda { gap: 1.3rem; }
+.j-vivos { display: grid; gap: .7rem; justify-items: center; width: 100%; }
+
+/* ---------- Votación ---------- */
+.j-votacion { gap: 1.1rem; }
+.j-progreso { width: 100%; display: grid; gap: .5rem; justify-items: center; }
+.j-barra-progreso { width: min(100%, 16rem); height: 2px; background: var(--color-linea); overflow: hidden; }
+.j-barra-progreso span { display: block; height: 100%; background: var(--color-peltre); transition: width .6s var(--ease-out); }
+.j-pie-fijo {
+  position: sticky; bottom: calc(4.9rem + env(safe-area-inset-bottom)); z-index: 5; width: 100%; padding: 1.1rem 0 .4rem; display: grid; justify-items: center;
+  background: linear-gradient(to top, var(--color-mesa) 55%, transparent);
+}
+.j-sellado { display: grid; gap: 1rem; justify-items: center; width: 100%; padding-top: .4rem; }
+.j-sello-voto { width: 5.2rem; height: 5.2rem; filter: drop-shadow(0 8px 12px oklch(0 0 0 / .55)); animation: estampa .8s var(--ease-out) both; }
+
+/* El botón del golpe se queda a la mano aunque la lista sea larga */
+.j-golpe .j-pie-fijo { background: linear-gradient(to top, color-mix(in oklch, var(--color-cartulina) 96%, black) 55%, transparent); }
+
+/* ---------- Veredicto ---------- */
+.j-veredicto { gap: 1.4rem; }
+.j-golpe { display: grid; gap: 1rem; justify-items: center; width: 100%; padding: 1.5rem 1.1rem 1.4rem; margin-bottom: .6rem; border: 1px solid color-mix(in oklch, var(--color-sangre) 60%, var(--color-linea)); border-radius: 3px;
+  background: radial-gradient(120% 80% at 50% 0%, color-mix(in oklch, var(--color-sangre) 16%, transparent), transparent 70%), var(--color-cartulina); }
+.j-revela { display: grid; gap: 1.1rem; justify-items: center; width: 100%; }
+.rev {
+  display: grid; justify-items: center; gap: .6rem; width: 100%; max-height: 0; overflow: hidden; opacity: 0; translate: 0 10px; filter: blur(4px);
+  transition: opacity .8s var(--ease-out), translate .8s var(--ease-out), filter .8s var(--ease-out), max-height .7s var(--ease-out);
+}
+.rev.on { max-height: 60rem; opacity: 1; translate: 0; filter: none; }
+.j-espera { display: grid; gap: .8rem; justify-items: center; }
+.j-votos { display: grid; gap: .6rem; justify-items: center; width: 100%; }
+.j-votos > ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; width: min(100%, 22rem); }
+.j-votos > ul > li { display: grid; grid-template-columns: minmax(0, 1fr) 6rem 1.6rem; gap: .7rem; align-items: center; text-align: left; }
+.j-voto-nombre { font: italic 1.05rem/1.2 var(--font-serif); color: var(--color-hueso); overflow-wrap: anywhere; hyphens: auto; }
+.j-voto-barra { display: block; height: 4px; background: linear-gradient(to right, var(--color-peltre) calc(var(--v, 1) * 100%), var(--color-linea) 0); border-radius: 2px; }
+.j-votos b { font: 400 1.2rem/1 var(--font-serif); text-align: right; font-variant-numeric: tabular-nums; color: var(--color-hueso); }
+.j-quien { width: min(100%, 22rem); text-align: left; }
+.j-quien summary { cursor: pointer; display: grid; place-items: center; min-height: 2.75rem; padding: .4rem 0; text-align: center; font-size: .78rem; letter-spacing: .12em; color: var(--color-humo); list-style: none; }
+.j-quien summary::-webkit-details-marker { display: none; }
+.j-quien summary::after { content: " ▾"; }
+.j-quien[open] summary::after { content: " ▴"; }
+.j-quien ul { list-style: none; margin: .4rem 0 0; padding: 0; display: grid; gap: .3rem; font-size: .9rem; color: var(--color-peltre); }
+.j-beben { display: grid; gap: .7rem; justify-items: center; width: 100%; }
+.j-secreto { position: relative; margin: 0; width: min(100%, 24rem); padding: 1.6rem 1.3rem 1.3rem; text-align: center; border: 1px solid var(--color-linea); border-radius: 3px;
+  background: linear-gradient(to bottom, var(--color-cartulina), color-mix(in oklch, var(--color-cartulina) 70%, var(--color-noche-hondo)));
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / .06), 0 22px 36px -24px black; display: grid; gap: .8rem; justify-items: center; }
+.j-secreto::before { content: ""; position: absolute; inset: .4rem; border: 1px solid color-mix(in oklch, var(--color-plata) 30%, transparent); border-radius: 2px; pointer-events: none; }
+.j-secreto blockquote { margin: 0; display: grid; gap: .6rem; }
+.j-secreto-sobre { font-size: .8rem; letter-spacing: .18em; text-transform: uppercase; color: var(--color-humo); }
+.j-secreto-sobre em { font: italic 1.05rem var(--font-serif); text-transform: none; letter-spacing: 0; color: var(--color-plata); }
+.j-secreto blockquote p { margin: 0; font: italic 1.3rem/1.45 var(--font-serif); font-variation-settings: var(--opsz-texto); color: var(--color-hueso); text-wrap: pretty; overflow-wrap: anywhere; }
+.j-secreto figcaption { font: italic .95rem var(--font-serif); color: var(--color-humo); }
+
+/* ---------- Bitácora ---------- */
+.j-bitacora { justify-items: stretch; text-align: left; }
+.j-bitacora .j-etiqueta { justify-self: center; }
+.j-bitacora-lista { list-style: none; margin: .4rem 0 0; padding: 0; display: grid; gap: 1.2rem; counter-reset: ronda; }
+.j-bitacora-lista li { display: grid; gap: .3rem; padding-left: 1.1rem; border-left: 1px solid var(--color-linea); }
+.j-bitacora-lista li.en-curso { border-left-color: var(--color-peltre); }
+.j-ronda-n { font-size: .66rem; letter-spacing: .28em; text-transform: uppercase; color: var(--color-humo); }
+.j-bitacora-lista p { margin: 0; font: italic 1.12rem/1.45 var(--font-serif); font-variation-settings: var(--opsz-texto); color: var(--color-plata); text-wrap: pretty; }
+.j-bitacora .j-texto { justify-self: center; text-align: center; }
+
+/* ---------- Mi carta ---------- */
+.j-carta { gap: 1.4rem; }
+.carta-mano {
+  --w: min(66vw, 16.5rem);
+  position: relative; width: var(--w); aspect-ratio: 280 / 480; padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--color-peltre); border-radius: 14px; perspective: 1100px;
+  touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.carta-mano.quieta { pointer-events: none; opacity: .7; }
+.cm-giro { position: absolute; inset: 0; display: block; transform-style: preserve-3d; transition: transform .5s var(--ease-out); }
+.carta-mano.volteada .cm-giro { transform: rotateY(180deg); }
+.carta-mano:not(.volteada):not(.quieta):active .cm-giro { transform: rotateY(9deg); transition-duration: .2s; }
+.cm-cara {
+  position: absolute; inset: 0; display: block; overflow: hidden; border-radius: 14px; background: var(--color-noche-hondo);
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-plata) 28%, transparent), 0 30px 44px -26px oklch(0 0 0 / .85);
+}
+.cm-frente { transform: rotateY(180deg); background: radial-gradient(90% 60% at 50% 40%, color-mix(in oklch, var(--color-campo) 90%, transparent), var(--color-noche-hondo)); }
+.carta-mano.apagada { filter: saturate(.4) brightness(.8); }
+.carta-mano:focus-visible { outline: 2px solid var(--color-peltre); outline-offset: 8px; }
+.cara-svg { display: block; width: 100%; height: 100%; }
+.cara-svg text { font-family: var(--font-serif); font-size: 17px; letter-spacing: .14em; fill: currentColor; font-variation-settings: var(--opsz-texto); }
+.cara-svg .xo { font-style: italic; letter-spacing: .08em; }
+.cara-svg .cara-num { font-size: 22px; }
+.cara-svg .cara-titulo { font-size: 25px; letter-spacing: .3em; font-variation-settings: var(--opsz-display); }
+.cara-svg .cara-leyenda { font-style: italic; font-size: 14px; letter-spacing: .1em; opacity: .75; }
+.cera { display: block; }
+
+/* ---------- Has muerto ---------- */
+.j-muerte {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-content: center; justify-items: center; gap: 1.2rem; padding: 2rem; text-align: center;
+  background: radial-gradient(90% 60% at 50% 30%, color-mix(in oklch, var(--color-sangre) 22%, var(--color-noche-hondo)), oklch(0.06 0.01 310) 75%);
+  animation: muerte-entra 1.1s var(--ease-lento) both;
+}
+@keyframes muerte-entra { from { opacity: 0; } }
+.j-muerte .j-titulo { animation: j-entra 1.2s var(--ease-out) .9s both; }
+.j-muerte .j-texto { animation: j-entra 1.2s var(--ease-out) 1.3s both; max-width: 26ch; }
+.j-muerte .secundario { animation: j-entra 1s var(--ease-out) 1.8s both; margin-top: .6rem; }
+.j-muerte-sello { position: relative; width: 8.5rem; height: 8.5rem; filter: drop-shadow(0 10px 18px oklch(0 0 0 / .7)); animation: sello-cae 1s var(--ease-out) .2s both; }
+.j-muerte-sello > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.j-muerte-sello polyline { fill: none; stroke: var(--color-cera-negra); stroke-width: 2.4; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: grieta 1s var(--ease-out) .9s forwards; }
+@keyframes grieta { to { stroke-dashoffset: 0; } }
+@keyframes sello-cae { from { scale: 1.5; opacity: 0; } 60% { scale: .95; opacity: 1; } to { scale: 1; } }
+
+/* ---------- Avisos ---------- */
+.avisos { position: fixed; inset: auto 0 calc(5.4rem + env(safe-area-inset-bottom)); z-index: 60; display: grid; gap: .5rem; justify-items: center; padding: 0 1rem; pointer-events: none; }
+.aviso-toast {
+  margin: 0; max-width: min(100%, 26rem); padding: .75rem 1.15rem; font-size: .92rem; line-height: 1.4; text-align: center; color: var(--color-hueso);
+  background: color-mix(in oklch, var(--color-campo) 95%, transparent); border: 1px solid var(--color-linea); border-radius: 2px;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 14px 30px -12px black;
+  animation: toast-entra .4s var(--ease-out) both;
+}
+.aviso-toast.ok { border-color: var(--color-peltre); }
+.aviso-toast.error { border-color: var(--color-sangre-texto); color: var(--color-sangre-texto); }
+@keyframes toast-entra { from { opacity: 0; translate: 0 10px; scale: .97; } }
+
+/* ---------- Hoja (confirmaciones) ---------- */
+.hoja-capa { position: fixed; inset: 0; z-index: 70; pointer-events: none; }
+.hoja-capa.abierta { pointer-events: auto; }
+.hoja-fondo { position: absolute; inset: 0; background: oklch(0 0 0 / .65); opacity: 0; transition: opacity .3s ease; }
+.hoja-capa.abierta .hoja-fondo { opacity: 1; }
+.hoja {
+  position: absolute; inset: auto 0 0; width: min(100%, 30rem); margin-inline: auto; display: grid; gap: .85rem; justify-items: center; text-align: center;
+  padding: 1rem 1.5rem calc(1.6rem + env(safe-area-inset-bottom)); outline: none; translate: 0 105%; transition: translate .45s var(--ease-out);
+  background: linear-gradient(to bottom, var(--color-cartulina), var(--color-noche)); border: 1px solid var(--color-linea); border-bottom: 0; border-radius: 14px 14px 0 0;
+  box-shadow: 0 -30px 50px -20px black;
+}
+.hoja-capa.abierta .hoja { translate: 0 0; }
+.hoja-asa { width: 2.6rem; height: 3px; border-radius: 2px; background: var(--color-linea); margin-bottom: .3rem; }
+.hoja-botones { display: grid; gap: .5rem; width: 100%; justify-items: center; }
+.hoja .secundario { margin-top: 0; }
+
+/* ---------- Premios ---------- */
+.premios { width: 100%; display: grid; gap: 1.8rem; justify-items: center; }
+.premios-cifras { margin: 0; max-width: 30ch; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--color-humo); line-height: 1.7; text-wrap: balance; }
+.podio { list-style: none; margin: 0; padding: 0; display: grid; width: min(100%, 22rem); }
+.podio li { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .6rem; align-items: baseline; padding: .8rem 0; border-bottom: 1px solid var(--color-linea); text-align: left; }
+.podio-n { font: italic 1.1rem var(--font-serif); color: var(--color-humo); }
+.podio-nombre { font: italic 1.5rem/1.1 var(--font-serif); color: var(--color-plata); overflow-wrap: anywhere; }
+.podio .lugar-1 .podio-nombre { font-size: 2rem; color: var(--color-hueso); }
+.podio-cifra { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--color-humo); white-space: nowrap; }
+.premios-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.3rem; width: min(100%, 22rem); }
+.premios-lista li { display: grid; gap: .2rem; }
+.premio-t { font-size: .66rem; letter-spacing: .28em; text-transform: uppercase; color: var(--color-humo); }
+.premio-n { font: italic 1.5rem/1.15 var(--font-serif); color: var(--color-hueso); overflow-wrap: anywhere; }
+.premio-d { font-size: .85rem; color: var(--color-humo); }
+
+@media (prefers-reduced-motion: reduce) {
+  .j-pantalla, .j-fichas li, .j-nombres li, .j-muerte .j-titulo, .j-muerte .j-texto, .j-muerte .secundario, .aviso-toast { animation: none; }
+  .rev { transition: opacity .4s ease, max-height .01s; translate: none; filter: none; }
+  .rev.on { translate: none; }
+  .cuenta.urgente .numeros, .j-conexion::before, .tv-conexion::before { animation: none; }
+  .cuenta .progreso, .j-barra-progreso span { transition: none; }
+  .cm-giro { transition: none; }
+  .carta-mano:not(.volteada):not(.quieta):active .cm-giro { transform: none; }
+  .j-ficha, .j-ficha-marca { transition: none; }
+  .j-ficha[aria-pressed="true"] { translate: none; }
+  .j-sello-voto, .j-muerte-sello { animation: none; }
+  .j-muerte-sello polyline { animation: none; stroke-dashoffset: 0; }
+  .hoja, .hoja-fondo { transition: opacity .2s ease; }
+  .hoja { translate: 0 0; opacity: 0; }
+  .hoja-capa.abierta .hoja { opacity: 1; }
+}
