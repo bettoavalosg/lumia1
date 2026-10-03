@@ -18,14 +18,15 @@ DIST = RAIZ / 'dist'
 PUBLICO = RAIZ / 'public'
 
 
-def compilar(env_extra: dict[str, str] | None = None) -> None:
-    """Corre `npm run build` (typecheck + Vite). Solo muestra la salida si falla."""
+def compilar(env_extra: dict[str, str] | None = None, salida: str = 'dist') -> None:
+    """Corre `npm run build` (typecheck + Vite) hacia `salida`. Solo muestra la salida si falla."""
     npm = shutil.which('npm')
     if not npm:
         sys.exit('No encontré npm. Instala Node 20 o más reciente y corre `npm install`.')
-    print('· npm run build', flush=True)
+    print(f'· npm run build → {salida}/', flush=True)
+    comando = [npm, 'run', 'build'] + ([] if salida == 'dist' else ['--', '--outDir', salida, '--emptyOutDir'])
     resultado = subprocess.run(
-        [npm, 'run', 'build'],
+        comando,
         cwd=RAIZ,
         env={**os.environ, **(env_extra or {})},
         capture_output=True,
@@ -44,6 +45,13 @@ class _Manejador(http.server.SimpleHTTPRequestHandler):
         '.woff2': 'font/woff2',
     }
 
+    def translate_path(self, path: str) -> str:
+        # Como los rewrites de Vercel: /tv, /admin y /demo son rutas de la app, no archivos.
+        ruta = super().translate_path(path)
+        if not os.path.exists(ruta) and not os.path.splitext(ruta)[1]:
+            return os.path.join(self.directory, 'index.html')
+        return ruta
+
     def end_headers(self) -> None:
         # Como en Vercel, nada se queda en la caché HTTP: de guardar se encarga el service worker.
         self.send_header('Cache-Control', 'no-cache')
@@ -55,13 +63,18 @@ class _Manejador(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+class _Servidor(http.server.ThreadingHTTPServer):
+    daemon_threads = True
+    request_queue_size = 128
+
+
 @contextlib.contextmanager
 def servir(directorio: Path = DIST, indice: str = 'index.html') -> Iterator[str]:
     """Sirve `directorio` en un puerto libre de 127.0.0.1 (contexto seguro: el service worker funciona)."""
     if not (directorio / indice).exists():
         sys.exit(f'Falta {directorio / indice}. Compila primero con `npm run build`.')
     manejador = functools.partial(_Manejador, directory=str(directorio))
-    servidor = http.server.ThreadingHTTPServer(('127.0.0.1', 0), manejador)
+    servidor = _Servidor(('127.0.0.1', 0), manejador)
     hilo = threading.Thread(target=servidor.serve_forever, daemon=True)
     hilo.start()
     try:

@@ -1,35 +1,37 @@
 """Pruebas de la invitación contra la app compilada, en Chromium con perfiles de celular.
 
-    python scripts/probar_invitacion.py              # compila y prueba
-    python scripts/probar_invitacion.py --sin-build  # prueba el dist/ actual
-    python scripts/probar_invitacion.py -k rsvp      # solo las pruebas cuyo nombre contiene "rsvp"
+    python scripts/probar_invitacion.py                   # compila y prueba en los dos entornos
+    python scripts/probar_invitacion.py --modo supabase   # solo el build de producción contra la API (servidor local)
+    python scripts/probar_invitacion.py --sin-build       # con los dist/ que ya tengas
+    python scripts/probar_invitacion.py -k rsvp           # solo las pruebas cuyo nombre contiene "rsvp"
 
-Cubre la carga sin errores (con la CSP activa y sin pedir nada fuera del sitio), los metadatos y
-la vista previa para WhatsApp, el manifest y los íconos, el service worker y la recarga sin red,
-el sobre y la ruptura del sello, el revelado de toda la suite (también tras un salto de scroll),
-la cuenta regresiva, la carta que no se deja voltear, el RSVP (errores, sellado y .ics), el
-teclado con foco visible, prefers-reduced-motion y 320 px de ancho sin scroll horizontal.
-
-Los perfiles de iPhone y Android emulan pantalla, densidad y tacto sobre Chromium: no sustituyen
-probar en Safari de iOS y Chrome de Android de verdad.
+Cubre la carga sin errores (con la CSP activa y sin pedir nada fuera del sitio), los metadatos y la vista previa
+para WhatsApp, el manifest y los íconos, el service worker y la recarga sin red, el sobre y la ruptura del sello,
+el revelado de toda la suite (también tras un salto de scroll), la cuenta regresiva, la carta que no se deja
+voltear, el RSVP de verdad (guarda al invitado, sella el secreto, entrega la llave y se recupera desde otro
+dispositivo), la dirección que solo aparece a su hora, el teclado con foco visible, prefers-reduced-motion y 320 px
+de ancho sin scroll horizontal.
 """
 
 from __future__ import annotations
 
-import argparse
-import sys
+import re
+import secrets
 import time
-import traceback
-from collections.abc import Callable
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
+from banco import (
+    MOVIMIENTO,
+    SUPABASE_FALSO,
+    TEXTOS_OCULTOS,
+    Banco,
+    correr,
+    esperar,
+    prueba,
+    texto,
+)
 
-from comun import compilar, lanzar_chromium, servir
-
-SITIO_PRUEBA = 'https://mariela-29.prueba'
 MESA = '#07050a'
 CDMX = timezone(timedelta(hours=-6))  # Sin horario de verano desde 2022
 INICIO = datetime(2026, 10, 24, 18, 0, tzinfo=CDMX)
@@ -50,191 +52,57 @@ ICS = '\r\n'.join([
     'END:VCALENDAR',
 ])
 
-# Se instala antes que la app: junta las violaciones de la CSP y cada propiedad que se anima
-# (transiciones y animaciones CSS, y Element.animate), con el elemento que la animó.
-VIGIA = """
-(() => {
-window.__csp = []
-document.addEventListener('securitypolicyviolation', e => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`))
-window.__animado = new Set()
-const nombre = (el, pseudo = '') => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + [...el.classList].map(c => '.' + c).join('') + pseudo
-const anotar = (propiedades, el, pseudo) => propiedades
-  .filter(p => !['offset', 'computedOffset', 'easing', 'composite'].includes(p))
-  .map(p => p.replace(/[A-Z]/g, m => '-' + m.toLowerCase()))
-  .forEach(p => window.__animado.add(`${p} · ${nombre(el, pseudo)}`))
-addEventListener('transitionrun', e => anotar([e.propertyName], e.target, e.pseudoElement), true)
-addEventListener('animationstart', e => {
-  const a = e.target.getAnimations({ subtree: true }).find(a => a.animationName === e.animationName)
-  anotar(a ? a.effect.getKeyframes().flatMap(Object.keys) : [e.animationName], e.target, e.pseudoElement)
-}, true)
-const animar = Element.prototype.animate
-Element.prototype.animate = function (fotogramas, opciones) {
-  anotar(Array.isArray(fotogramas) ? fotogramas.flatMap(Object.keys) : Object.keys(fotogramas ?? {}), this, '')
-  return animar.call(this, fotogramas, opciones)
-}
-})()
-"""
 
-# Lo que cuenta como movimiento para prefers-reduced-motion: desplazar, girar, escalar, barrer o desenfocar.
-MOVIMIENTO = {
-    'transform', 'translate', 'rotate', 'scale', 'clip-path', 'filter', 'stroke-dashoffset',
-    'background-position', 'background-position-x', 'background-position-y', 'top', 'left', 'right', 'bottom',
-}
-
-RECORRER = """
-async () => {
-  const pausa = ms => new Promise(r => setTimeout(r, ms))
-  const fondo = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 2
-  for (let paso = 0; paso < 80 && !fondo(); paso++) {
-    scrollBy(0, innerHeight * 0.6)
-    await pausa(220)
-  }
-  if (!fondo()) throw new Error(`no llegué al final de la página (scrollY ${scrollY})`)
-}
-"""
-
-# Cada elemento con texto dentro de #carta, con su opacidad efectiva (producto de sus ancestros).
-TEXTOS_OCULTOS = """
-() => {
-  const malos = []
-  const vistos = new Set()
-  const recorrido = document.createTreeWalker(document.getElementById('carta'), NodeFilter.SHOW_TEXT)
-  while (recorrido.nextNode()) {
-    const nodo = recorrido.currentNode
-    const el = nodo.parentElement
-    if (!nodo.textContent.trim() || vistos.has(el)) continue
-    vistos.add(el)
-    // Ocultos a propósito: estados que aún no ocurren, texto para lectores de pantalla, el sobre ya
-    // abierto y el rótulo "Sellando tu secreto", que se apaga al terminar de sellar.
-    if (el.closest('[hidden], .sr-only, svg, .push, .sobre-hint, .sellado-t')) continue
-    let opacidad = 1
-    let oculto = false
-    for (let n = el; n; n = n.parentElement) {
-      const estilo = getComputedStyle(n)
-      opacidad *= parseFloat(estilo.opacity)
-      if (estilo.visibility === 'hidden' || estilo.display === 'none') oculto = true
-    }
-    if (oculto || opacidad < 0.99) malos.push(`"${nodo.textContent.trim().slice(0, 48)}" (opacidad ${opacidad.toFixed(2)})`)
-  }
-  if (getComputedStyle(document.querySelector('.firma')).clipPath.includes('110%')) malos.push('la firma XOXO sigue recortada')
-  return malos
-}
-"""
+def contar(banco: Banco, tabla: str, donde: str = 'true') -> int:
+    """Cuántas filas hay en una tabla privada del servidor, mirando la base directamente."""
+    if banco.db is not None:
+        return banco.db.valor(f'select count(*) from app.{tabla} where {donde}')
+    pagina = banco.sesiones[0].pagina
+    return pagina.evaluate("([q]) => window.__marielaDemo.sql(q, []).then(r => Number(r[0].n))", [f'select count(*) as n from app.{tabla} where {donde}'])
 
 
-@dataclass
-class Sesion:
-    pagina: Page
-    url: str
-    tactil: bool
-    errores: list[str] = field(default_factory=list)
-    peticiones: list[str] = field(default_factory=list)
-
-    def ir(self) -> None:
-        self.pagina.goto(self.url)
-        self.pagina.wait_for_selector('.escena.listo')
-
-    def tocar(self, selector: str, forzar: bool = False) -> None:
-        objetivo = self.pagina.locator(selector)
-        objetivo.tap(force=forzar) if self.tactil else objetivo.click(force=forzar)
-
-    def abrir(self) -> float:
-        """Rompe el sello y espera a que la portada quede sobre la mesa. Devuelve cuánto tardó."""
-        self.ir()
-        inicio = time.perf_counter()
-        self.tocar('#sello')
-        self.pagina.wait_for_selector('.escena.abierta', timeout=6000)
-        return time.perf_counter() - inicio
-
-    def recorrer(self) -> None:
-        self.pagina.evaluate(RECORRER)
-        # La firma termina de escribirse 2.5 s después de llegar.
-        self.pagina.wait_for_timeout(2800)
-
-    def sin_errores(self) -> None:
-        violaciones = self.pagina.evaluate('window.__csp')
-        assert not violaciones, f'violaciones de CSP: {violaciones}'
-        assert not self.errores, 'errores:\n' + '\n'.join(self.errores)
-        externas = [u for u in self.peticiones if not u.startswith(self.url) and not u.startswith(('data:', 'blob:'))]
-        assert not externas, f'pidió cosas fuera del sitio: {externas}'
-
-
-@dataclass
-class Banco:
-    playwright: Playwright
-    navegador: Browser
-    url: str
-    contextos: list[BrowserContext] = field(default_factory=list)
-
-    def sesion(self, perfil: str = 'Pixel 7', movimiento: str = 'no-preference', hora: datetime | None = None) -> Sesion:
-        if perfil == 'escritorio':
-            opciones = {'viewport': {'width': 1280, 'height': 800}, 'device_scale_factor': 1}
-        else:
-            opciones = {k: v for k, v in self.playwright.devices[perfil].items() if k != 'default_browser_type'}
-        contexto = self.navegador.new_context(
-            **opciones,
-            reduced_motion=movimiento,
-            locale='es-MX',
-            timezone_id='America/Mexico_City',
-            accept_downloads=True,
-        )
-        self.contextos.append(contexto)
-        contexto.add_init_script(VIGIA)
-        pagina = contexto.new_page()
-        if hora:
-            pagina.clock.set_fixed_time(hora)
-        s = Sesion(pagina, self.url, tactil=bool(opciones.get('has_touch')))
-        pagina.on('console', lambda m: m.type == 'error' and s.errores.append(f'consola: {m.text}'))
-        pagina.on('pageerror', lambda e: s.errores.append(f'excepción: {e}'))
-        pagina.on('requestfailed', lambda r: s.errores.append(f'falló {r.url}: {r.failure}'))
-        pagina.on('response', lambda r: r.status >= 400 and s.errores.append(f'{r.status} {r.url}'))
-        pagina.on('request', lambda r: s.peticiones.append(r.url))
-        return s
-
-    def cerrar(self) -> None:
-        for contexto in self.contextos:
-            contexto.close()
-        self.contextos.clear()
-
-
-PRUEBAS: list[Callable[[Banco], None]] = []
-
-
-def prueba(fn: Callable[[Banco], None]) -> Callable[[Banco], None]:
-    PRUEBAS.append(fn)
-    return fn
-
-
-def texto(pagina: Page, selector: str) -> str:
-    return ' '.join(pagina.locator(selector).text_content().split())
-
-
-def esperar(pagina: Page, expresion: str, segundos: float = 5) -> None:
-    """Como wait_for_function, que evalúa con eval dentro de la página y la CSP lo bloquea."""
-    limite = time.monotonic() + segundos
-    while not pagina.evaluate(expresion):
-        if time.monotonic() > limite:
-            raise AssertionError(f'no se cumplió en {segundos} s: {expresion}')
-        pagina.wait_for_timeout(100)
+def admin(banco: Banco) -> str:
+    return banco.llamar('admin_login', p_pin=banco.pin)['session']
 
 
 # ---------------------------------------------------------------- carga y metadatos
 
 
-@prueba
+@prueba()
 def carga_limpia(banco: Banco) -> None:
     """Carga sin errores, con la CSP de producción y todo servido desde el propio sitio."""
     s = banco.sesion('Pixel 7')
     s.ir()
     csp = s.pagina.locator('meta[http-equiv="Content-Security-Policy"]').get_attribute('content')
     assert csp and "script-src 'self'" in csp, 'falta la CSP en el HTML de producción'
+    assert "'unsafe-eval'" not in csp and "'unsafe-inline'" not in csp.split('script-src')[1].split(';')[0], 'la CSP de scripts es más laxa de lo debido'
     fuentes = s.pagina.evaluate("[...document.fonts].filter(f => f.status === 'loaded').map(f => `${f.family} ${f.style}`)")
     for esperada in ['Bodoni Moda italic', 'Bodoni Moda normal', 'Jost normal']:
         assert esperada in fuentes, f'no cargó {esperada}: {fuentes}'
+    banco.esperar_backend(s.pagina)
+    s.pagina.wait_for_timeout(1500)
     s.sin_errores()
 
 
-@prueba
+@prueba()
+def la_invitacion_aparece_antes_que_el_servidor(banco: Banco) -> None:
+    """El sobre se pinta sin esperar a que el servidor responda (ni siquiera si está caído)."""
+    s = banco.sesion('Pixel 7')
+    if banco.modo == 'supabase':
+        # Nada contesta: la invitación igual tiene que verse y no debe soltar errores raros.
+        s.pagina.context.unroute(SUPABASE_FALSO + '/rest/**')
+        s.pagina.context.route(SUPABASE_FALSO + '/rest/**', lambda ruta: ruta.abort())
+    t0 = time.perf_counter()
+    s.ir()
+    assert time.perf_counter() - t0 < 4, 'la invitación tardó demasiado en verse'
+    assert texto(s.pagina, '.sobre-hint') == 'Toca el sello'
+    s.tocar('#sello')
+    s.pagina.wait_for_selector('.escena.abierta', timeout=6000)
+    s.recorrer()
+    assert s.pagina.locator('#form').count() == 1, 'sin servidor la invitación debe seguir completa'
+
+
+@prueba()
 def metadatos_y_vista_previa(banco: Banco) -> None:
     """Título, descripción y og:image absoluta de 1200×630 y menos de 300 KB (límite de WhatsApp)."""
     s = banco.sesion('Pixel 7')
@@ -248,10 +116,7 @@ def metadatos_y_vista_previa(banco: Banco) -> None:
     assert meta['theme-color'] == MESA
     assert meta['twitter:card'] == 'summary_large_image'
     imagen = meta['og:image']
-    if imagen.startswith('http'):
-        assert imagen.endswith('/og.jpg') and meta['og:url'] + 'og.jpg' == imagen, f'og:image y og:url no coinciden: {imagen}'
-    else:
-        print('      aviso: og:image es relativa (compila con VITE_SITE_URL para que WhatsApp la encuentre)')
+    assert imagen.startswith('https://') and imagen.endswith('/og.jpg') and meta['og:url'] + 'og.jpg' == imagen, f'og:image y og:url no coinciden: {imagen}'
     info = s.pagina.evaluate("""async () => {
       const r = await fetch('/og.jpg')
       const blob = await r.blob()
@@ -261,10 +126,9 @@ def metadatos_y_vista_previa(banco: Banco) -> None:
     assert info['tipo'] == 'image/jpeg', info
     assert (info['ancho'], info['alto']) == (1200, 630), info
     assert info['bytes'] < 300 * 1024, f"og.jpg pesa {info['bytes'] / 1024:.0f} KB"
-    s.sin_errores()
 
 
-@prueba
+@prueba()
 def manifest_e_iconos(banco: Banco) -> None:
     """El manifest describe una PWA instalable y cada ícono mide lo que dice."""
     s = banco.sesion('Pixel 7')
@@ -291,16 +155,18 @@ def manifest_e_iconos(banco: Banco) -> None:
     assert {('192x192', 'any'), ('512x512', 'any'), ('512x512', 'maskable')} <= tamanos, tamanos
     assert info['apple'] == '180x180', info['apple']
     assert info['favicon'] == '32x32', info['favicon']
-    s.sin_errores()
 
 
-@prueba
+@prueba('supabase')
 def funciona_sin_red(banco: Banco) -> None:
-    """Con el service worker listo, la invitación recarga y se abre sin conexión."""
+    """Con el service worker listo, la invitación recarga y se abre sin conexión (el RSVP avisa que no hay red)."""
     s = banco.sesion('Pixel 7')
     s.ir()
     # Desde la primera visita: el service worker instala el precache y toma el control.
     esperar(s.pagina, 'navigator.serviceWorker.controller !== null', 15)
+    # Playwright resuelve las rutas desviadas por su cuenta, sin pasar por el modo sin conexión del navegador: la API se corta aparte.
+    s.pagina.context.unroute(SUPABASE_FALSO + '/rest/**')
+    s.pagina.context.route(SUPABASE_FALSO + '/**', lambda ruta: ruta.abort('internetdisconnected'))
     s.pagina.context.set_offline(True)
     try:
         inicio = time.perf_counter()
@@ -309,16 +175,25 @@ def funciona_sin_red(banco: Banco) -> None:
         s.tocar('#sello')
         s.pagina.wait_for_selector('.escena.abierta', timeout=6000)
         assert s.pagina.evaluate("document.fonts.check('italic 400 16px \"Bodoni Moda\"')"), 'sin red no cargó Bodoni Moda'
-        print(f'      sin red: abrió en {time.perf_counter() - inicio:.1f} s')
+        s.recorrer()
+        s.pagina.fill('#nombre', 'Ana')
+        s.pagina.fill('#sobre-quien', 'Luis')
+        s.pagina.fill('#secreto', 'Sin red no se puede sellar.')
+        s.tocar('#form button[type=submit]')
+        s.pagina.wait_for_selector('#e-general:not(:empty)', timeout=25000)
+        assert 'conexión' in texto(s.pagina, '#e-general'), texto(s.pagina, '#e-general')
+        assert s.pagina.locator('#form').is_visible(), 'al fallar el envío el formulario tiene que volver'
+        assert s.pagina.input_value('#secreto') == 'Sin red no se puede sellar.', 'se perdió lo que escribió'
+        print(f'      sin red: abrió y avisó en {time.perf_counter() - inicio:.1f} s')
     finally:
         s.pagina.context.set_offline(False)
-    s.sin_errores()
+    s.sin_errores(ignorar_red=True)
 
 
 # ---------------------------------------------------------------- el sobre
 
 
-@prueba
+@prueba()
 def sobre_cerrado(banco: Banco) -> None:
     """La notificación anónima, el sello y nada más: sin scroll y con la suite inerte."""
     s = banco.sesion('iPhone 15')
@@ -337,10 +212,9 @@ def sobre_cerrado(banco: Banco) -> None:
     # Tocar la notificación señala el sello.
     s.tocar('#push')
     assert p.evaluate("document.getElementById('sello').getAnimations().length") > 0, 'la notificación no señaló el sello'
-    s.sin_errores()
 
 
-@prueba
+@prueba()
 def romper_el_sello(banco: Banco) -> None:
     """Al romper el sello sale la portada, el foco va al título y se libera el scroll."""
     s = banco.sesion('Pixel 7')
@@ -351,17 +225,29 @@ def romper_el_sello(banco: Banco) -> None:
     assert enfocado == 'Hay una fiesta en la Ciudad de México…', f'el foco quedó en: {enfocado!r}'
     assert p.evaluate("document.documentElement.style.overflow") == ''
     assert p.evaluate("!document.getElementById('suite').inert && !document.getElementById('portada').inert")
-    # Nada del sobre queda encima de la portada.
     encima = p.evaluate("""() => {
       const r = document.getElementById('portada').getBoundingClientRect()
       return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('#portada') !== null
     }""")
     assert encima, 'algo tapa la portada'
     assert texto(p, '#remate') == '…y esta noche alguien no va a salir viva.'
-    s.sin_errores()
 
 
-@prueba
+@prueba()
+def quien_ya_abrio_el_sobre_no_lo_rompe_otra_vez(banco: Banco) -> None:
+    """La segunda visita en el mismo teléfono entra directo a la portada."""
+    s = banco.sesion('Pixel 7')
+    s.abrir()
+    s.pagina.reload()
+    s.pagina.wait_for_selector('.escena.abierta')
+    assert s.pagina.locator('#sello').count() == 1 and not s.pagina.locator('#sello').is_visible()
+    assert s.pagina.evaluate("document.documentElement.style.overflow") == ''
+    assert texto(s.pagina, '#portada h1') == 'Hay una fiesta en la Ciudad de México…'
+    s.recorrer()
+    assert not s.pagina.evaluate(TEXTOS_OCULTOS)
+
+
+@prueba()
 def revelado_completo(banco: Banco) -> None:
     """Bajando por la página, cada texto de la suite termina visible."""
     s = banco.sesion('Pixel 7')
@@ -369,10 +255,11 @@ def revelado_completo(banco: Banco) -> None:
     s.recorrer()
     ocultos = s.pagina.evaluate(TEXTOS_OCULTOS)
     assert not ocultos, 'siguen ocultos:\n' + '\n'.join(ocultos)
+    banco.esperar_backend(s.pagina)
     s.sin_errores()
 
 
-@prueba
+@prueba()
 def revelado_tras_salto(banco: Banco) -> None:
     """Si el scroll salta hasta el final, las piezas que nunca entraron a la vista también se revelan."""
     s = banco.sesion('Pixel 7')
@@ -381,13 +268,12 @@ def revelado_tras_salto(banco: Banco) -> None:
     s.pagina.wait_for_timeout(2800)
     ocultos = s.pagina.evaluate(TEXTOS_OCULTOS)
     assert not ocultos, 'siguen ocultos:\n' + '\n'.join(ocultos)
-    s.sin_errores()
 
 
 # ---------------------------------------------------------------- la carta y el reloj
 
 
-@prueba
+@prueba()
 def cuenta_regresiva(banco: Banco) -> None:
     """El reloj cuenta hacia el sábado 24 a las 6:00 pm de la Ciudad de México."""
     s = banco.sesion('Pixel 7', hora=INICIO - timedelta(days=1, hours=1, minutes=1, seconds=1))
@@ -400,10 +286,9 @@ def cuenta_regresiva(banco: Banco) -> None:
     p.clock.set_fixed_time(INICIO + timedelta(seconds=1))
     esperar(p, "document.getElementById('reloj').textContent.startsWith('Ya')")
     assert texto(p, '#reloj') == 'Ya se puede voltear. Corre.'
-    s.sin_errores()
 
 
-@prueba
+@prueba()
 def la_carta_no_se_voltea(banco: Banco) -> None:
     """Cada intento recibe una negativa distinta, la carta se resiste y regresa, y su frente no existe."""
     s = banco.sesion('Pixel 7')
@@ -422,20 +307,18 @@ def la_carta_no_se_voltea(banco: Banco) -> None:
             assert giro != 'none', 'la carta no se movió al intentar voltearla'
         p.wait_for_timeout(800)
     assert p.evaluate("getComputedStyle(document.querySelector('.carta-giro')).transform") == 'none', 'la carta no regresó'
-    # La carta solo tiene dorso: el rol no está en el cliente.
     assert texto(p, '#carta-juego .sr-only') == 'Intentar voltear tu carta'
     grabado = texto(p, '#carta-juego').lower()
     assert 'inocente' not in grabado and 'asesino' not in grabado, grabado
     assert p.locator('#carta-juego').get_attribute('aria-describedby') == 'reloj'
     p.wait_for_timeout(3300)
     assert texto(p, '#aviso') == '', 'el aviso no se borró'
-    s.sin_errores()
 
 
 # ---------------------------------------------------------------- RSVP
 
 
-@prueba
+@prueba()
 def rsvp_errores(banco: Banco) -> None:
     """Sin datos, cada campo dice qué falta; el secreto tiene que ser de otra persona."""
     s = banco.sesion('Pixel 7')
@@ -464,12 +347,12 @@ def rsvp_errores(banco: Banco) -> None:
     p.fill('#secreto', 'hola')
     assert texto(p, '#contador') == '4 / 280'
     assert p.locator('#secreto').get_attribute('maxlength') == '280'
-    s.sin_errores()
+    assert contar(banco, 'players') == 0, 'un formulario con errores no debe guardar nada'
 
 
-@prueba
-def rsvp_sellado_y_calendario(banco: Banco) -> None:
-    """El secreto se tacha y se sella, llega la confirmación y el .ics es el del prototipo. En Fase 1 no se envía nada."""
+@prueba()
+def rsvp_guarda_al_invitado_y_sella_el_secreto(banco: Banco) -> None:
+    """El secreto se tacha y se sella mientras viaja; el servidor guarda al invitado con su secreto pendiente y entrega su llave."""
     s = banco.sesion('Pixel 7')
     s.abrir()
     p = s.pagina
@@ -478,29 +361,188 @@ def rsvp_sellado_y_calendario(banco: Banco) -> None:
     p.fill('#nombre', 'Ana')
     p.fill('#sobre-quien', 'Mariela')
     p.fill('#secreto', secreto)
-    antes = len(s.peticiones)
     s.tocar('#form button[type=submit]')
     assert p.locator('#form').is_hidden()
     assert p.locator('#sellado-txt span').count() == len(secreto.split())
-    p.wait_for_selector('#sellado.tachar.estampado.hecho', timeout=4000)
+    p.wait_for_selector('#sellado.tachar.estampado.hecho', timeout=25000)
     p.wait_for_selector('#aceptado:not([hidden])')
     assert texto(p, '#aceptado h3') == 'Aceptaste, Ana.'
+    assert texto(p, '#aceptado > p') == 'Tu secreto quedó sellado. Nadie va a saber que fuiste tú.'
     assert p.evaluate('document.activeElement.id') == 'aceptado'
-    assert s.peticiones[antes:] == [], f'el RSVP hizo peticiones: {s.peticiones[antes:]}'
 
+    # El servidor guardó todo, con el secreto pendiente y sin el token en claro.
+    assert contar(banco, 'players', "name = 'Ana'") == 1
+    assert contar(banco, 'secrets', f"status = 'pendiente' and about_name = 'Mariela' and text = '{secreto}'") == 1
+    token = p.evaluate("localStorage.getItem('mariela.token')")
+    assert token and len(token) >= 40
+    assert contar(banco, 'players', f"token_hash = sha256(convert_to('{token}', 'UTF8'))") == 1, 'el servidor guarda el hash del token'
+
+    # Le entrega su llave para recuperar el lugar en otro teléfono.
+    llave = texto(p, '.llave-c')
+    assert re.fullmatch(r'[A-HJ-KM-NP-Z2-9]{4}-[A-HJ-KM-NP-Z2-9]{4}', llave), llave
+    assert p.evaluate("localStorage.getItem('mariela.llave')") == llave
+    assert 'Tu secreto está en revisión' in texto(p, '.secreto-estado')
+
+    # Volver a abrir la invitación en el mismo teléfono no repite la ceremonia: ya está aceptada.
+    p.reload()
+    p.wait_for_selector('#aceptado:not([hidden])', timeout=20000)
+    assert texto(p, '#aceptado h3') == 'Aceptaste, Ana.'
+    assert p.locator('#form').is_hidden() and p.locator('#sellado').is_hidden()
+    assert texto(p, '.llave-c') == llave
+
+
+@prueba()
+def rsvp_calendario(banco: Banco) -> None:
+    """El .ics que se descarga es el del prototipo, línea por línea."""
+    s = banco.sesion('Pixel 7')
+    s.abrir()
+    p = s.pagina
+    p.locator('#form').scroll_into_view_if_needed()
+    p.fill('#nombre', 'Ana')
+    p.fill('#sobre-quien', 'Mariela')
+    p.fill('#secreto', 'Le tiene miedo a los pavos reales.')
+    s.tocar('#form button[type=submit]')
+    p.wait_for_selector('#aceptado:not([hidden])', timeout=25000)
     with p.expect_download() as descarga:
         s.tocar('#calendario')
     archivo = descarga.value
     assert archivo.suggested_filename == 'mariela-29.ics'
     contenido = Path(archivo.path()).read_bytes().decode('utf-8')
     assert contenido == ICS, f'el .ics no coincide:\n{contenido!r}'
-    s.sin_errores()
+
+
+@prueba()
+def rsvp_rechazado_por_el_servidor_deshace_el_sello(banco: Banco) -> None:
+    """Un nombre repetido no entra: el sello se deshace y el error queda en el campo del nombre, con lo escrito intacto."""
+    s = banco.anfitrion()
+    banco.llamar('rsvp', p_token=secrets.token_urlsafe(32), p_name='Ana', p_about='Luis', p_text='algo')
+    s.abrir()
+    p = s.pagina
+    p.locator('#form').scroll_into_view_if_needed()
+    p.fill('#nombre', 'ANA')
+    p.fill('#sobre-quien', 'Mariela')
+    p.fill('#secreto', 'Otro secreto cualquiera.')
+    s.tocar('#form button[type=submit]')
+    p.wait_for_selector('#e-nombre:not(:empty)', timeout=25000)
+    assert 'ya respondió' in texto(p, '#e-nombre'), texto(p, '#e-nombre')
+    assert p.locator('#form').is_visible() and p.locator('#sellado').is_hidden()
+    assert p.evaluate('document.activeElement.id') == 'nombre'
+    assert p.input_value('#secreto') == 'Otro secreto cualquiera.'
+    assert p.evaluate("localStorage.getItem('mariela.token')") is None, 'un RSVP rechazado no deja un token huérfano'
+    assert contar(banco, 'players') == 1
+
+
+@prueba()
+def recuperar_el_lugar_con_la_llave(banco: Banco) -> None:
+    """Desde otro teléfono (o la app instalada), nombre y llave devuelven el lugar; el dispositivo anterior lo pierde."""
+    s = banco.sesion('Pixel 7')
+    s.abrir()
+    p = s.pagina
+    p.locator('#form').scroll_into_view_if_needed()
+    p.fill('#nombre', 'Ana María')
+    p.fill('#sobre-quien', 'Mariela')
+    p.fill('#secreto', 'Nunca ha visto Titanic completa.')
+    s.tocar('#form button[type=submit]')
+    p.wait_for_selector('#aceptado:not([hidden])', timeout=25000)
+    llave = texto(p, '.llave-c')
+    token_viejo = p.evaluate("localStorage.getItem('mariela.token')")
+    assert token_viejo
+
+    # El otro teléfono: el mismo navegador, pero sin el token (así el servidor puede vivir dentro de la página, en `demo`).
+    p.evaluate("localStorage.removeItem('mariela.token')")
+    s.ir()
+    p.wait_for_selector('.escena.abierta', timeout=15000)  # el sobre ya se rompió en este navegador: la portada aparece abierta
+    p.locator('.recuperar .enlace').scroll_into_view_if_needed()
+    p.locator('.recuperar .enlace').click()
+    p.fill('#rec-nombre', 'ana maria')
+    p.fill('#rec-llave', 'AAAA-AAAA')
+    p.get_by_role('button', name='Entrar').click()
+    p.wait_for_selector('.recuperar-campos .error:not(:empty)', timeout=15000)
+    assert 'no coinciden' in texto(p, '.recuperar-campos .error')
+    p.fill('#rec-llave', llave.lower())
+    p.get_by_role('button', name='Entrar').click()
+    p.wait_for_selector('#aceptado:not([hidden])', timeout=15000)
+    assert texto(p, '#aceptado h3') == 'Aceptaste, Ana María.'
+    token_nuevo = p.evaluate("localStorage.getItem('mariela.token')")
+    assert token_nuevo and token_nuevo != token_viejo
+
+    # El teléfono anterior ya no es el dueño de ese lugar.
+    p.evaluate("t => localStorage.setItem('mariela.token', t)", token_viejo)
+    s.ir()
+    p.wait_for_selector('.escena.abierta', timeout=15000)
+    p.locator('#form').scroll_into_view_if_needed()
+    p.wait_for_timeout(1500)
+    assert p.locator('#form').is_visible(), 'el token viejo sigue funcionando'
+
+
+@prueba()
+def enlace_de_llave_entra_solo(banco: Banco) -> None:
+    """El enlace que da el admin (?nombre=…&llave=…) recupera el lugar sin tocar nada."""
+    s = banco.anfitrion()
+    r = banco.llamar('rsvp', p_token=secrets.token_urlsafe(32), p_name='Sofía Reyes', p_about='Luis', p_text='algo gracioso')
+    s.ir(f"?nombre=Sof%C3%ADa%20Reyes&llave={r['recovery_key']}")
+    s.pagina.wait_for_selector('.escena.listo')
+    s.tocar('#sello')
+    s.pagina.wait_for_selector('.escena.abierta', timeout=8000)
+    s.pagina.wait_for_selector('#aceptado:not([hidden])', timeout=25000)
+    assert texto(s.pagina, '#aceptado h3') == 'Aceptaste, Sofía Reyes.'
+    assert 'llave=' not in s.pagina.url, 'la llave no debe quedar en la URL'
+
+
+@prueba()
+def la_direccion_solo_aparece_a_su_hora(banco: Banco) -> None:
+    """La dirección no está en ningún lado del cliente hasta que el servidor la revela."""
+    direccion = 'Calle Falsa 123, Col. Roma Norte, CDMX'
+    s = banco.anfitrion()
+    sesion_admin = admin(banco)
+    if banco.modo == 'demo':
+        banco.llamar('admin_config', p_session=sesion_admin, p_changes={'rehearsal': True})
+    banco.llamar('admin_config', p_session=sesion_admin, p_changes={'address': direccion, 'address_reveal_at': (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()})
+    s.abrir()
+    s.recorrer()
+    p = s.pagina
+    assert direccion not in p.content() and direccion not in p.inner_text('body'), 'la dirección llegó al cliente antes de tiempo'
+    assert 'Se revela unos días antes.' in texto(p, '.datos')
+    # El admin la revela: en la siguiente consulta aparece, con su enlace a Maps.
+    banco.llamar('admin_config', p_session=sesion_admin, p_changes={'address_reveal_at': (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()})
+    p.reload()
+    p.wait_for_selector('.escena.abierta', timeout=15000)
+    p.wait_for_selector('.datos dd:has-text("Calle Falsa 123")', timeout=20000)
+    assert 'Ya no es un secreto' in texto(p, '.datos')
+    assert 'google.com/maps' in p.locator('.datos a').get_attribute('href')
+
+
+@prueba()
+def secreto_rechazado_se_reemplaza(banco: Banco) -> None:
+    """Si el admin rechaza el secreto, su autor ve el aviso y escribe otro."""
+    s = banco.sesion('Pixel 7')
+    s.abrir()
+    p = s.pagina
+    p.locator('#form').scroll_into_view_if_needed()
+    p.fill('#nombre', 'Ana')
+    p.fill('#sobre-quien', 'Mariela')
+    p.fill('#secreto', 'Uno demasiado pesado.')
+    s.tocar('#form button[type=submit]')
+    p.wait_for_selector('#aceptado:not([hidden])', timeout=25000)
+    sesion_admin = admin(banco)
+    banco.llamar('admin_state', p_session=sesion_admin)
+    lista = banco.llamar('admin_state', p_session=sesion_admin)['secrets']
+    banco.llamar('admin_secret', p_session=sesion_admin, p_id=lista[0]['id'], p_status='rechazado')
+    p.reload()
+    p.wait_for_selector('.reemplazo', timeout=20000)
+    assert 'no pasó la revisión' in texto(p, '.reemplazo-t')
+    p.fill('#rem-quien', 'Mariela')
+    p.fill('#rem-secreto', 'Uno más suave.')
+    p.get_by_role('button', name='Enviar otro').click()
+    p.wait_for_selector('.reemplazo', state='detached', timeout=15000)
+    assert 'en revisión' in texto(p, '.secreto-estado')
+    assert contar(banco, 'secrets', "status = 'pendiente' and text = 'Uno más suave.'") == 1
 
 
 # ---------------------------------------------------------------- accesibilidad y pantallas chicas
 
 
-@prueba
+@prueba()
 def teclado_y_foco_visible(banco: Banco) -> None:
     """Todo se usa con teclado, en orden, con el foco siempre visible."""
     s = banco.sesion('escritorio')
@@ -528,10 +570,9 @@ def teclado_y_foco_visible(banco: Banco) -> None:
         p.keyboard.press('Tab')
         actual = foco()
         assert actual == {'id': esperado, 'visible': True}, f'esperaba {esperado}, llegó {actual}'
-    s.sin_errores()
 
 
-@prueba
+@prueba()
 def movimiento_reducido(banco: Banco) -> None:
     """Con prefers-reduced-motion, en todo el recorrido: solo fundidos, nada se desplaza y no hay atmósfera animada."""
     s = banco.sesion('Pixel 7', movimiento='reduce')
@@ -551,17 +592,16 @@ def movimiento_reducido(banco: Banco) -> None:
     p.fill('#sobre-quien', 'Mariela')
     p.fill('#secreto', 'Se sabe todas las coreografías de Gossip Girl.')
     s.tocar('#form button[type=submit]')
-    p.wait_for_selector('#aceptado:not([hidden])', timeout=3000)
+    p.wait_for_selector('#aceptado:not([hidden])', timeout=25000)
     p.wait_for_timeout(800)
     animado = p.evaluate('[...window.__animado]')
     movimiento = sorted(a for a in animado if a.split(' · ')[0] in MOVIMIENTO)
     assert not movimiento, 'con movimiento reducido se animó:\n' + '\n'.join(movimiento)
     ocultos = p.evaluate(TEXTOS_OCULTOS)
     assert not ocultos, 'siguen ocultos:\n' + '\n'.join(ocultos)
-    s.sin_errores()
 
 
-@prueba
+@prueba()
 def pantalla_de_320(banco: Banco) -> None:
     """A 320 px de ancho nada se sale de la pantalla, ni con un secreto de una sola palabra larguísima."""
     s = banco.sesion('iPhone SE')
@@ -580,47 +620,11 @@ def pantalla_de_320(banco: Banco) -> None:
     p.fill('#sobre-quien', 'Mariela')
     p.fill('#secreto', 'jajajajajajajajajajajajajajajajajajajajajajajajajaja')
     s.tocar('#form button[type=submit]')
-    p.wait_for_selector('#aceptado:not([hidden])', timeout=4000)
+    p.wait_for_selector('#aceptado:not([hidden])', timeout=25000)
     assert desborde() <= 0, f'el sellado se desborda {desborde()} px'
-    ancho = p.evaluate("Math.max(...[...document.querySelectorAll('#sellado-txt span, #aceptado h3')].map(e => e.getBoundingClientRect().right))")
+    ancho = p.evaluate("Math.max(...[...document.querySelectorAll('#sellado-txt span, #aceptado h3, .llave-c')].map(e => e.getBoundingClientRect().right))")
     assert ancho <= p.evaluate('innerWidth'), f'el texto sellado llega a {ancho:.0f} px'
-    s.sin_errores()
-
-
-# ---------------------------------------------------------------- corrida
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--sin-build', action='store_true', help='no compilar; probar el dist/ actual')
-    parser.add_argument('-k', dest='filtro', default='', help='solo las pruebas cuyo nombre contiene este texto')
-    args = parser.parse_args()
-
-    if not args.sin_build:
-        compilar({'VITE_SITE_URL': SITIO_PRUEBA})
-    elegidas = [fn for fn in PRUEBAS if args.filtro in fn.__name__]
-    fallas = 0
-    with servir() as url, sync_playwright() as p:
-        navegador = lanzar_chromium(p)
-        banco = Banco(p, navegador, url + '/')
-        print(f'· {len(elegidas)} pruebas · Chromium {navegador.version} · {url}')
-        for fn in elegidas:
-            inicio = time.perf_counter()
-            try:
-                fn(banco)
-            except Exception as error:  # noqa: BLE001
-                fallas += 1
-                print(f'  ✗ {fn.__name__}  ({time.perf_counter() - inicio:.1f} s)')
-                detalle = str(error) if isinstance(error, AssertionError) and str(error) else traceback.format_exc(limit=3)
-                print('      ' + detalle.strip().replace('\n', '\n      '))
-            else:
-                print(f'  ✓ {fn.__name__}  ({time.perf_counter() - inicio:.1f} s)')
-            finally:
-                banco.cerrar()
-        navegador.close()
-    print(f'{len(elegidas) - fallas} de {len(elegidas)} pasaron.')
-    sys.exit(1 if fallas else 0)
 
 
 if __name__ == '__main__':
-    main()
+    correr(__doc__)

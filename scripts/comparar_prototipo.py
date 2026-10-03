@@ -10,6 +10,11 @@ Aspecto: con movimiento reducido y el reloj detenido, captura el sobre, la porta
 completa en los dos y mide qué fracción de píxeles cambia a la vista.
 El prototipo pide sus fuentes a Google; aquí recibe las mismas que la app sirve, para comparar
 tipografía contra tipografía.
+
+La app se prueba como va a estar en la fiesta: el build de producción hablando con un servidor de verdad (Postgres local con las
+mismas migraciones, ver banco.py). Lo que la app le suma a la invitación al conectarla con el servidor (recuperar el lugar con la
+llave, mostrar la llave, "Entrar a la noche") está marcado con `data-extra`: aquí se oculta y no cuenta en el texto, porque el
+prototipo no lo tiene. Todo lo demás tiene que ser idéntico.
 """
 
 from __future__ import annotations
@@ -23,8 +28,8 @@ from pathlib import Path
 
 from playwright.sync_api import Browser, Page, Route, sync_playwright
 
-from comun import ESPERAR_ANIMACIONES, RAIZ, compilar, lanzar_chromium, servir
-from probar_invitacion import RECORRER
+from banco import RECORRER, entorno
+from comun import ESPERAR_ANIMACIONES, RAIZ, servir
 
 PROTOTIPO = RAIZ / 'prototipo' / 'invitacion-mariela-v3.html'
 HORA = datetime(2026, 10, 1, 12, 0, tzinfo=timezone(timedelta(hours=-6)))
@@ -73,7 +78,9 @@ TEXTO = """
 selector => {
   const recorrido = document.createTreeWalker(document.querySelector(selector), NodeFilter.SHOW_TEXT)
   const partes = []
-  while (recorrido.nextNode()) partes.push(recorrido.currentNode.textContent)
+  while (recorrido.nextNode()) {
+    if (!recorrido.currentNode.parentElement.closest('[data-extra]')) partes.push(recorrido.currentNode.textContent)
+  }
   return partes.join(' ').split(/\\s+/).filter(Boolean).join(' ')
 }
 """
@@ -117,7 +124,7 @@ def recorrer(pagina: Page, url: str) -> dict:
     pagina.fill('#sobre-quien', 'Mariela')
     pagina.fill('#secreto', 'Se sabe de memoria todas las temporadas de Gossip Girl.')
     enviar.tap()
-    pagina.wait_for_selector('#aceptado:not([hidden])', timeout=4000)
+    pagina.wait_for_selector('#aceptado:not([hidden])', timeout=12000)
     dinamico += [pagina.evaluate(TEXTO, '#sellado-txt'), pagina.evaluate(TEXTO, '#aceptado')]
     return {'estatico': estatico, 'dinamico': dinamico, 'capturas': capturas}
 
@@ -128,11 +135,10 @@ def main() -> None:
     parser.add_argument('--guardar', type=Path, help='carpeta donde guardar capturas y mapas de diferencias')
     args = parser.parse_args()
 
-    if not args.sin_build:
-        compilar()
     fallas: list[str] = []
     fuentes_app = (RAIZ / 'src' / 'styles' / 'fuentes.css').read_text()
-    with servir() as url_app, servir(PROTOTIPO.parent, PROTOTIPO.name) as url_proto, sync_playwright() as p:
+    with sync_playwright() as p, entorno('supabase', p, not args.sin_build) as banco, servir(PROTOTIPO.parent, PROTOTIPO.name) as url_proto:
+        url_app = banco.url.rstrip('/')
         fuentes = fuentes_app.replace('url("/fonts/', f'url("{url_app}/fonts/')
 
         def enrutar(ruta: Route) -> None:
@@ -144,7 +150,7 @@ def main() -> None:
             else:
                 ruta.abort()
 
-        navegador: Browser = lanzar_chromium(p)
+        navegador: Browser = banco.navegador
         resultados = {}
         for nombre, url in [('app', url_app + '/'), ('prototipo', f'{url_proto}/{PROTOTIPO.name}')]:
             contexto = navegador.new_context(
@@ -152,6 +158,9 @@ def main() -> None:
                 reduced_motion='reduce', locale='es-MX', timezone_id='America/Mexico_City', service_workers='block',
             )
             contexto.route('**/*', enrutar)
+            if nombre == 'app':
+                banco._desviar(contexto, realtime=False)  # las llamadas a "Supabase" van al servidor local
+                contexto.add_init_script("document.addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: '[data-extra] { display: none !important }' })))")
             resultados[nombre] = recorrer(contexto.new_page(), url)
             contexto.close()
         app, proto = resultados['app'], resultados['prototipo']
@@ -188,7 +197,6 @@ def main() -> None:
                 for k, v in resultados.items():
                     (args.guardar / f'{estado}-{k}.png').write_bytes(v['capturas'][estado])
                 (args.guardar / f'{estado}-diferencia.png').write_bytes(base64.b64decode(r['png']))
-        navegador.close()
 
     if fallas:
         sys.exit(f'Difiere del prototipo en: {", ".join(fallas)}')

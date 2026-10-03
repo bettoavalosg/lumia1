@@ -20,14 +20,14 @@ from comun import ESPERAR_ANIMACIONES, PUBLICO, compilar, lanzar_chromium, servi
 
 # La primera impresión en WhatsApp: el sobre cerrado con el sello, sin notificación ni instrucciones.
 CSS_OG = """
-.push, .sobre-hint { display: none !important; }
+.push, .sobre-hint, .pastilla-demo { display: none !important; }
 .escena { --w: min(84vw, 25rem, 50svh); --ey: 50%; height: 100svh; }
 body::after, .bruma, .destello { animation: none !important; }
 """
 
 # Para los íconos solo queda el sello, sobre un lienzo propio.
 CSS_ICONO = """
-#raiz { visibility: hidden !important; }
+#raiz, .pastilla-demo { visibility: hidden !important; }
 body::before, body::after { display: none !important; }
 html, body { background: transparent !important; }
 #lienzo-icono { position: fixed; inset: 0; z-index: 99; display: grid; place-items: center; }

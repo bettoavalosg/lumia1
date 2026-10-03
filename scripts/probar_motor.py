@@ -1122,7 +1122,7 @@ def ranking_cuenta_tragos_aciertos_y_muertes(db):
     votantes = {x.nombre for x in n.jugadores if x.nombre in n.tragos()}
     asesino = n.asesinos()[0]
     asesino.matar(n.inocentes()[0])
-    est = n.jugadores[0].estado()
+    n.jugadores[0].estado()
     r = n.adm('admin_state')['ranking']
     por_nombre = {p['name']: p for p in r['players']}
     for nombre in votantes:
@@ -1222,6 +1222,21 @@ def el_ensayo_solo_existe_si_esta_encendido(db):
 
 
 @prueba
+def el_admin_puede_jugar_como_otro_solo_en_ensayo(db):
+    n = Noche(db, 4, lobby=False)
+    j = n.jugadores[0]
+    espera_error('no_ensayo', lambda: n.adm('admin_rehearsal', p_action='impersonate', p_player=j.id))
+    n.config(rehearsal=True)
+    n.adm('admin_rehearsal', p_action='bots', p_value=2)
+    bot = db.valor('select id::text from app.players where is_bot limit 1')
+    token = n.adm('admin_rehearsal', p_action='impersonate', p_player=bot)['token']
+    assert db.llamar('get_state', p_token=token)['me']['id'] == bot
+    otro = n.adm('admin_rehearsal', p_action='impersonate', p_player=j.id)['token']
+    assert db.llamar('get_state', p_token=otro)['me']['id'] == j.id and j.estado()['known'] is False
+    espera_error('no_existe', lambda: n.adm('admin_rehearsal', p_action='impersonate', p_player='00000000-0000-0000-0000-000000000000'))
+
+
+@prueba
 def los_bots_juegan_una_noche_completa(db):
     n = Noche(db, 3, lobby=False, rehearsal=True, round_seconds=60, vote_seconds=30, kill_seconds=15, pause_seconds=5, bots_delay_seconds=1)
     n.adm('admin_rehearsal', p_action='bots', p_value=9)
@@ -1277,6 +1292,54 @@ def las_notificaciones_solo_van_a_quienes_las_activaron(db):
 
 
 @prueba
+def la_puerta_y_la_direccion_avisan_una_sola_vez(db):
+    """Abrir la puerta avisa a quien aún no llega; revelar la dirección avisa a todos a su hora, una vez, aunque consulten veinte a la vez."""
+    from datetime import timedelta
+
+    n = Noche(db, 5, lobby=False)
+    sub = {'endpoint': 'https://push.example/abc', 'keys': {'p256dh': 'BPk', 'auth': 'xyz'}}
+    for j in n.jugadores[:4]:
+        db.llamar('save_push', p_token=j.token, p_subscription=sub)  # el quinto no activó los avisos
+    db.sql('delete from app.push_queue')
+    titulos = lambda: Counter(f['title'] for f in db.filas('select title from app.push_queue'))  # noqa: E731
+
+    n.adm('admin_player', p_id=n.jugadores[0].id, p_action='check_in')  # el primero ya está adentro: a él no se le avisa que abrieron
+    n.adm('admin_phase', p_phase='lobby')
+    assert titulos() == Counter({'La puerta está abierta': 3})
+    n.adm('admin_phase', p_phase='lobby')  # abrirla otra vez no repite el aviso
+    assert titulos() == Counter({'La puerta está abierta': 3})
+
+    db.sql('delete from app.push_queue')
+    n.config(address='Calle Falsa 123', address_reveal_at=(db.ahora() + timedelta(hours=2)).isoformat())
+    n.jugadores[0].estado()
+    assert titulos() == Counter(), 'todavía no es la hora'
+    # Veinte consultas a la vez justo cuando llega la hora. Las conexiones se abren antes, para que de verdad choquen
+    # (abrirlas en el momento las escalona y el choque casi nunca ocurre).
+    conexiones = [db.conexion() for _ in range(20)]
+    try:
+        db.adelantar(3 * 3600)  # sin n.adelantar: su "tick" ya avisaría antes de que choquen las consultas
+        consultas = [lambda j=j, c=c: db.llamar('get_state', conn=c, p_token=j.token) for j, c in zip(n.jugadores * 4, conexiones, strict=True)]
+        errores = [r for r in en_paralelo(consultas) if isinstance(r, Exception)]
+    finally:
+        for c in conexiones:
+            c.close()
+    assert not errores, errores
+    assert titulos() == Counter({'Ya sabes dónde es': 4}), 'veinte consultas simultáneas deben avisar una sola vez'
+    assert db.valor('select address_notified_at is not null from app.event') is True
+    n.jugadores[0].estado()
+    assert titulos() == Counter({'Ya sabes dónde es': 4}), 'consultas posteriores no repiten el aviso'
+
+    # Cambiar la hora de revelado (el "Revelar ya" del admin) vuelve a armarlo.
+    n.config(address_reveal_at=(db.ahora() - timedelta(minutes=1)).isoformat())
+    n.jugadores[0].estado()
+    assert titulos() == Counter({'Ya sabes dónde es': 8})
+    # Sin dirección no hay nada que avisar.
+    n.config(address='', address_reveal_at=(db.ahora() - timedelta(minutes=1)).isoformat())
+    n.jugadores[0].estado()
+    assert titulos() == Counter({'Ya sabes dónde es': 8})
+
+
+@prueba
 def el_juego_avisa_a_quien_le_toca(db):
     n = Noche(db, 6, kill_seconds=600)
     sub = {'endpoint': 'https://push.example/abc', 'keys': {'p256dh': 'BPk', 'auth': 'xyz'}}
@@ -1296,6 +1359,51 @@ def el_juego_avisa_a_quien_le_toca(db):
     assert titulos() == Counter({'Has muerto': 1})
     destinatario = db.valor('select player_id::text from app.push_queue')
     assert destinatario == victima.id
+
+
+# ============================================================================================= DESPLIEGUE
+@prueba
+def setup_sql_se_puede_volver_a_pegar_sin_perder_nada(db):
+    """Quien pegue supabase/setup.sql otra vez (para activar pg_cron, por ejemplo) no pierde invitados, ajustes, PIN ni la llave de la tele."""
+    from pathlib import Path
+
+    n = Noche(db, 4, lobby=False)
+    n.config(address='Calle Falsa 123', round_seconds=77, door_code='LUNA')
+    antes = db.fila('select * from app.event')
+    conteos = lambda: (db.valor('select count(*) from app.players'), db.valor('select count(*) from app.secrets'))  # noqa: E731
+    previos = conteos()
+    db.psql((Path(__file__).resolve().parent.parent / 'supabase' / 'setup.sql').read_text(), 'setup-otra-vez')
+    assert conteos() == previos
+    assert db.fila('select * from app.event') == antes, 'la configuración y la llave de la tele deben quedar igual'
+    assert db.llamar('admin_login', p_pin=PIN)['ok'] is True
+    assert n.jugadores[0].estado()['known'] is True
+
+
+@prueba
+def la_limpieza_de_despues_de_la_fiesta_borra_a_la_gente_y_deja_el_pin(db):
+    """`select app.borrar_datos_de_la_fiesta()` deja la base sin invitados, secretos ni partidas, y la app lista para empezar de nuevo."""
+    n = Noche(db, 6, address='Calle Falsa 123')
+    n.a_fallo()
+    n.config(door_code='LUNA')
+    assert db.valor('select count(*) from app.players') == 6
+    # Nadie desde fuera puede llamarla: `app` no está expuesto.
+    with db.conexion() as conn:
+        conn.execute('set role anon')
+        try:
+            conn.execute('select app.borrar_datos_de_la_fiesta()')
+        except psycopg.errors.InsufficientPrivilege:
+            pass
+        else:
+            raise AssertionError('anon pudo borrar los datos de la fiesta')
+        finally:
+            conn.rollback()
+    db.sql('select app.borrar_datos_de_la_fiesta()')
+    for tabla in ('players', 'secrets', 'games', 'rounds', 'roles', 'votes', 'shots', 'kills', 'push_queue', 'admin_sessions'):
+        assert db.valor(f'select count(*) from app.{tabla}') == 0, tabla
+    ev = db.fila('select phase, address, door_code, rehearsal, round_seconds from app.event')
+    assert (ev['phase'], ev['address'], ev['door_code'], ev['rehearsal']) == ('invitacion', None, None, False), ev
+    assert db.llamar('admin_login', p_pin=PIN)['ok'] is True, 'el PIN debe seguir sirviendo'
+    assert db.llamar('get_state', p_token='x' * 43)['known'] is False
 
 
 # ============================================================================================= CONCURRENCIA

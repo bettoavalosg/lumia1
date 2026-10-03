@@ -1,3 +1,7 @@
 # Scripts de automatización (Python 3.10 o más reciente).
 # Después de instalar: python -m playwright install chromium
+#
+# Las pruebas del motor y del ensayo local levantan un Postgres temporal: necesitan PostgreSQL 15 o más reciente instalado
+# (en Debian/Ubuntu: apt install postgresql; en macOS: brew install postgresql@16). No hace falta que esté corriendo.
 playwright>=1.49
+psycopg[binary]>=3.2

@@ -17,7 +17,6 @@ import socket
 import subprocess
 import sys
 import tempfile
-import time
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -76,14 +75,16 @@ def _puerto_libre() -> int:
 class BaseDeDatos:
     """Una base lista para usar. Úsala con `with`."""
 
-    def __init__(self, url: str | None = None):
+    def __init__(self, url: str | None = None, pin: str | None = '123456'):
         self.url = url or os.environ.get('DATABASE_URL')
+        self._pin = pin
         self._temporal: Path | None = None
         self._bin: Path | None = None
         self._prefijo: list[str] = []
         self._admin: psycopg.Connection | None = None
         self._firmas: dict[str, list[tuple[str, str]]] = {}
         self._pin_hash = ''
+        self._funciones: set[str] = set()
 
     # -- ciclo de vida ------------------------------------------------------------------------------
     def __enter__(self) -> BaseDeDatos:
@@ -93,7 +94,8 @@ class BaseDeDatos:
         for migracion in MIGRACIONES:
             self.psql(migracion.read_text(), f'{migracion.name}')
         self._admin = psycopg.connect(self.url, autocommit=True)
-        self._admin.execute("select app.set_admin_pin('123456')")
+        if self._pin:
+            self._admin.execute('select app.set_admin_pin(%s)', (self._pin,))
         self._pin_hash = self._admin.execute('select pin_hash from app.admin').fetchone()[0]
         return self
 
@@ -174,6 +176,12 @@ class BaseDeDatos:
     def conexion(self) -> psycopg.Connection:
         return psycopg.connect(self.url, autocommit=False)
 
+    def _existe(self, conn: psycopg.Connection, funcion: str) -> bool:
+        if not self._funciones:
+            self._funciones = {f for (f,) in conn.execute("select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'").fetchall()}
+            conn.rollback()
+        return funcion in self._funciones
+
     def _firma(self, conn: psycopg.Connection, funcion: str) -> list[tuple[str, str]]:
         if funcion not in self._firmas:
             filas = conn.execute(
@@ -191,9 +199,9 @@ class BaseDeDatos:
         propia = conn is None
         conn = conn or self.conexion()
         try:
+            if not self._existe(conn, funcion):
+                raise ErrorApi('funcion_desconocida', f'Could not find the function public.{funcion} in the schema cache')
             firma = dict(self._firma(conn, funcion))
-            if not firma and args:
-                raise ErrorApi('funcion_desconocida', f'No existe public.{funcion}')
             partes, valores = [], {}
             for nombre, valor in args.items():
                 if nombre not in firma:
