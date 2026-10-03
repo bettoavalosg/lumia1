@@ -1341,7 +1341,11 @@ def simulador_de_la_noche(banco: Banco) -> None:
         s.pagina.wait_for_timeout(2500)
     else:
         raise AssertionError(f'la noche no avanzó: {texto(s.pagina, ".sim-titulo")}')
-    expect(tv.locator('.tv-ronda .j-etiqueta, .tv-fin-partida, .tv-veredicto').first).to_be_visible(timeout=30000)
+    # La tele siguió a la partida: ya no está en la votación de la ronda 1. El título del simulador va hasta 3 s atrás del servidor, así
+    # que un "Adelantar" de más puede haber abierto la votación de la ronda 2: no importa en qué momento de la ronda 2 (o de otra
+    # partida) la agarre, y a veces ya enseña el final de la partida.
+    siguiente = re.compile(r'Partida [2-9]|Ronda ([2-9]|\d\d)')
+    expect(tv.locator('.tv-fin-partida').or_(tv.locator('.tv-contexto', has_text=siguiente)).first).to_be_visible(timeout=30000)
     s.sin_errores()
 
 
