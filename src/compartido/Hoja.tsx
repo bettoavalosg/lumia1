@@ -15,6 +15,9 @@ interface Props {
  * y no a la ventana: una pantalla que entra animada ya se queda con un `translate: 0px`, y con eso la hoja cerrada asomaba sobre la
  * barra de pestañas. Por eso no se dibuja donde se declara sino sobre la raíz de la app (`.juego`, que nunca se anima y conserva los
  * estilos de los botones de la noche), o sobre `body` si no hay ninguna.
+ *
+ * Como queda al final de la app, el título de lo que lleva dentro es un `h2` (válido después de cualquier encabezado): un `h3`
+ * saltaría un nivel según el encabezado que le toque antes.
  */
 export function Hoja({ abierta, alCerrar, titulo, children }: Props) {
   const ancla = useRef<HTMLSpanElement>(null)

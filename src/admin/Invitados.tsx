@@ -111,7 +111,7 @@ export function Invitados() {
         {detalle && (
           <>
             <p className="j-etiqueta">Invitado</p>
-            <h3 className="j-titulo chico">{detalle.name}</h3>
+            <h2 className="j-titulo chico">{detalle.name}</h2>
             <div className="hoja-botones">
               {!detalle.bot && (
                 <button type="button" className="secundario" onClick={() => void nuevaLlave(detalle)}>

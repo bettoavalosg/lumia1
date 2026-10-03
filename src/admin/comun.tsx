@@ -55,7 +55,7 @@ export function Confirmar({ abierta, titulo, texto, boton, peligro = false, alCo
   return (
     <Hoja abierta={abierta} alCerrar={alCerrar} titulo={titulo}>
       <p className={`j-etiqueta${peligro ? ' rojo' : ''}`}>{peligro ? 'Sin vuelta atrás' : 'Confirmar'}</p>
-      <h3 className="j-titulo chico">{titulo}</h3>
+      <h2 className="j-titulo chico">{titulo}</h2>
       <p className="j-texto">{texto}</p>
       <div className="hoja-botones">
         <button

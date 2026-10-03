@@ -53,9 +53,9 @@ export function SelectorVictima({ hasta, total, titulo, texto }: Props) {
       </div>
       <Hoja abierta={confirmando} alCerrar={() => setConfirmando(false)} titulo="Confirmar víctima">
         <p className="j-etiqueta rojo">Sin vuelta atrás</p>
-        <h3 className="j-titulo chico">
+        <h2 className="j-titulo chico">
           ¿Será <em>{victima?.name}</em>?
-        </h3>
+        </h2>
         <p className="j-texto">Se entera en cuanto lo confirmes. Y la tele lo va a anunciar.</p>
         <div className="hoja-botones">
           <button type="button" id="j-confirmar-victima" className="primario rojo" disabled={enviando} onClick={() => void golpear()}>
