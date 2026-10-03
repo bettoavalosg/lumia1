@@ -9,6 +9,7 @@ en la fiesta. En cada una se mide, con el navegador:
   · que la página no se desplace de lado (nada más ancho que la pantalla);
   · que ningún control (botón, enlace, campo) mida menos de 44 × 44 px al tacto, salvo enlaces dentro de un párrafo;
   · que el texto legible no baje de 10 px;
+  · que las hojas de confirmación estén pegadas a la ventana: cerradas no se ven y abiertas suben desde el borde de abajo;
   · en la tele, que todo quepa en una sola pantalla, sin desplazarse.
 """
 
@@ -80,12 +81,23 @@ MEDIR = """
     const px = parseFloat(getComputedStyle(el).fontSize)
     if (px < minimoTexto) { chico++; chicos.push(`${nombre(el)} ${px.toFixed(1)}px`) }
   }
+  // Las hojas de confirmación van fijas a la ventana: la capa la cubre entera, cerrada no se pinta (antes asomaba sobre las pestañas
+  // porque una pantalla con translate la desanclaba de la ventana) y abierta sube desde el borde de abajo.
+  const hojas = []
+  for (const capa of document.querySelectorAll('.hoja-capa')) {
+    const c = capa.getBoundingClientRect(), h = capa.querySelector('.hoja').getBoundingClientRect()
+    const abierta = capa.classList.contains('abierta'), oculta = getComputedStyle(capa).visibility === 'hidden'
+    if (Math.abs(c.left) > 1 || Math.abs(c.top) > 1 || Math.abs(c.width - ancho) > 1 || Math.abs(c.height - alto) > 1) hojas.push(`la capa no cubre la ventana (${Math.round(c.left)},${Math.round(c.top)} ${Math.round(c.width)}×${Math.round(c.height)} en ${ancho}×${alto})`)
+    if (!abierta && !oculta) hojas.push('una hoja cerrada se puede ver')
+    if (abierta && oculta) hojas.push('una hoja abierta está oculta')
+    if (abierta && Math.abs(h.bottom - alto) > 1) hojas.push(`la hoja abierta no llega al borde de abajo (${Math.round(h.bottom)} de ${alto})`)
+  }
   return {
     ancho, alto,
     scrollX: document.documentElement.scrollWidth - ancho,
     scrollY: document.documentElement.scrollHeight - alto,
     ajuste: parseFloat(document.documentElement.dataset.ajusteTele || '1'),
-    desborde: desborde.slice(0, 6), toque: toque.slice(0, 8), chicos: chicos.slice(0, 4),
+    desborde: desborde.slice(0, 6), toque: toque.slice(0, 8), chicos: chicos.slice(0, 4), hojas,
   }
 }
 """
@@ -150,6 +162,8 @@ class Informe:
             self.problemas.append(f'{etiqueta}: controles chicos → {m["toque"]}')
         if m['chicos']:
             self.problemas.append(f'{etiqueta}: texto demasiado chico → {m["chicos"]}')
+        if m['hojas']:
+            self.problemas.append(f'{etiqueta}: hojas de confirmación → {m["hojas"]}')
         for v in self.axe(s):
             self.problemas.append(f'{etiqueta}: accesibilidad ({v})')
         if tele and m['scrollY'] > 1:
@@ -277,6 +291,33 @@ def la_antesala_y_la_puerta_caben(banco: Banco) -> None:
     inf.medir(s, 'antesala, ya con 17 presentes')
     inf.medir(telefono(banco, n.jugadores[1], perfil='Pixel 7'), 'antesala en Pixel 7')
     inf.medir(telefono(banco, n.jugadores[2], perfil='iPad Mini'), 'antesala en iPad Mini')
+    s.sin_errores(rechazos=True)
+    inf.cerrar()
+
+
+@prueba('supabase')
+def la_hoja_de_confirmación_no_depende_de_lo_que_la_contiene(banco: Banco) -> None:
+    """Una pantalla que entra animada, o que se queda con un translate, un filtro o un will-change, no desancla la hoja de la ventana."""
+    n = noche_larga(banco, 8)
+    inocente, acusado = n.inocentes()[:2]
+    inf = Informe()
+    s = telefono(banco, inocente, perfil='iPhone SE')
+    n.a_votacion()
+    ver(s, '.j-votacion > .j-etiqueta', 'Votación', seg=9)
+    inf.medir(s, 'votación, con la hoja cerrada')
+
+    # El peor caso: todo lo que rodea a la hoja crea un bloque contenedor para lo que es position: fixed.
+    s.pagina.add_style_tag(content='.j-pantalla, .j-escena, .j-votacion, main { translate: 0 1px !important; filter: opacity(1) !important; will-change: transform !important; }')
+    forzado = s.pagina.evaluate("getComputedStyle(document.querySelector('.j-pantalla')).translate")
+    assert forzado != 'none', 'la prueba no logró crear el bloque contenedor que quería forzar'
+    inf.medir(s, 'votación con la pantalla trasladada')
+    elegir_ficha(s, acusado.nombre, 'Votar por')
+    s.tocar('#j-votar')
+    expect(hoja_abierta(s)).to_contain_text(f'¿Votas por {acusado.nombre}?')
+    inf.medir(s, 'hoja abierta con la pantalla trasladada')
+    s.tocar('.hoja-capa.abierta .secundario')  # "Todavía no"
+    expect(s.pagina.locator('.hoja-capa.abierta')).to_have_count(0)
+    inf.medir(s, 'hoja otra vez cerrada con la pantalla trasladada')
     s.sin_errores(rechazos=True)
     inf.cerrar()
 

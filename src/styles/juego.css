@@ -58,7 +58,8 @@
 @keyframes j-late { 50% { opacity: .35; } }
 
 .j-escena { flex: 1; width: min(100%, 30rem); margin-inline: auto; padding: 1.75rem 1.25rem calc(7rem + env(safe-area-inset-bottom)); }
-.j-pantalla { display: grid; gap: 1.15rem; justify-items: center; text-align: center; animation: j-entra .6s var(--ease-out) both; }
+/* `backwards` y no `both`: al terminar no debe quedar ningún translate (ni siquiera 0), porque con uno distinto de none la pantalla se vuelve el bloque contenedor de todo lo que sea position: fixed dentro de ella. */
+.j-pantalla { display: grid; gap: 1.15rem; justify-items: center; text-align: center; animation: j-entra .6s var(--ease-out) backwards; }
 @keyframes j-entra { from { opacity: 0; translate: 0 12px; } }
 
 /* ---------- Tipografía de la noche ---------- */
@@ -302,8 +303,9 @@
 @keyframes toast-entra { from { opacity: 0; translate: 0 10px; scale: .97; } }
 
 /* ---------- Hoja (confirmaciones) ---------- */
-.hoja-capa { position: fixed; inset: 0; z-index: 70; pointer-events: none; }
-.hoja-capa.abierta { pointer-events: auto; }
+/* Cerrada no se pinta ni se enfoca; `visibility` espera a que termine de bajar para apagarse. */
+.hoja-capa { position: fixed; inset: 0; z-index: 70; pointer-events: none; visibility: hidden; transition: visibility 0s linear .45s; }
+.hoja-capa.abierta { pointer-events: auto; visibility: visible; transition-delay: 0s; }
 .hoja-fondo { position: absolute; inset: 0; background: oklch(0 0 0 / .65); opacity: 0; transition: opacity .3s ease; }
 .hoja-capa.abierta .hoja-fondo { opacity: 1; }
 .hoja {
@@ -345,6 +347,8 @@
   .j-sello-voto, .j-muerte-sello { animation: none; }
   .j-muerte-sello polyline { animation: none; stroke-dashoffset: 0; }
   .hoja, .hoja-fondo { transition: opacity .2s ease; }
+  .hoja-capa { transition-delay: .2s; }
+  .hoja-capa.abierta { transition-delay: 0s; }
   .hoja { translate: 0 0; opacity: 0; }
   .hoja-capa.abierta .hoja { opacity: 1; }
 }
