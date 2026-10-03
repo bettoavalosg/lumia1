@@ -23,9 +23,20 @@
 .admin .secundario { margin-top: 0; }
 .admin .secundario:disabled, .admin .primario:disabled { opacity: .38; cursor: default; }
 .admin .secundario.peligro { color: var(--color-sangre-texto); border-color: color-mix(in oklch, var(--color-sangre-texto) 50%, transparent); }
-a.secundario { display: inline-grid; place-items: center; text-decoration: none; }
+a.secundario, a.primario { display: inline-grid; place-items: center; text-decoration: none; }
 .ad-fila-botones { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
 .ad-fila-botones .secundario { padding: .85rem 1.1rem .85rem calc(1.1rem + .28em); }
+.ad-fila-botones .primario { margin: 0; min-height: 3rem; padding: .95rem 1.6rem .95rem calc(1.6rem + .28em); }
+/* En «Mandar la invitación» los botones se reparten el ancho por igual y, en un teléfono, cada uno ocupa su renglón. */
+.ad-invitar .ad-fila-botones > * { flex: 1 1 12rem; min-height: 3rem; }
+
+/* Mandar la invitación: dos campos, cómo le llega el mensaje y los botones. */
+.ad-invitar { display: grid; gap: 1rem; text-align: left; }
+.ad-invitar-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem 1.2rem; }
+.ad-ayuda { margin: 0; max-width: 60ch; font-size: .82rem; line-height: 1.45; color: var(--color-humo); text-wrap: pretty; }
+.ad-ayuda.error { color: var(--color-sangre-texto); }
+.ad-vista { display: grid; gap: .5rem; margin: 0; }
+.ad-mensaje { margin: 0; padding: 1rem 1.1rem; white-space: pre-line; overflow-wrap: anywhere; font: 400 .98rem/1.55 var(--font-sans); color: var(--color-hueso); border: 1px solid var(--color-linea); border-radius: 14px 14px 14px 3px; background: color-mix(in oklch, var(--color-campo) 70%, transparent); }
 
 .ad-lista-check { list-style: none; margin: 0; padding: 0; display: grid; gap: .1rem; }
 .ad-lista-check li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .75rem 0 .75rem 1.8rem; position: relative; border-bottom: 1px solid color-mix(in oklch, var(--color-linea) 60%, transparent); font-size: .92rem; color: var(--color-peltre); }

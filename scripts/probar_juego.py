@@ -17,6 +17,7 @@ import re
 import secrets
 import subprocess
 import time
+import urllib.parse
 
 from playwright.sync_api import expect
 
@@ -882,7 +883,7 @@ def admin_invitados_y_secretos(banco: Banco) -> None:
     s = panel(banco, n, 'Invitados')
     filas = s.pagina.locator('.ad-invitado')
     expect(filas).to_have_count(5)
-    ver(s, '.ad-seccion', '0 presentes de 5')
+    hay(s, '.ad-seccion', '0 presentes de 5')  # la tarjeta de mandar la invitación es la primera sección: hay que buscar entre todas
     s.pagina.fill('#busca', 'jugador 03')
     expect(filas).to_have_count(1)
     hay(s, '.ad-invitado', 'Jugador 03')
@@ -896,7 +897,7 @@ def admin_invitados_y_secretos(banco: Banco) -> None:
     expect(primero).to_have_attribute('aria-pressed', 'false')
     primero.click()
     expect(primero).to_have_attribute('aria-pressed', 'true')
-    ver(s, '.ad-seccion', '1 presentes de 5')
+    hay(s, '.ad-seccion', '1 presentes de 5')  # la tarjeta de mandar la invitación es la primera sección: hay que buscar entre todas
     assert contar(banco, 'players', 'checked_in') == 1
     primero.click()
     expect(primero).to_have_attribute('aria-pressed', 'false')
@@ -964,6 +965,100 @@ def admin_invitados_y_secretos(banco: Banco) -> None:
     ver(s, '.ad-resumen', '5 en el juego')
     ver(s, '.ad-pestanas', 'Secretos')
     assert s.pagina.locator('.ad-aviso').count() == 0, 'ya no hay nada por revisar: la insignia se va'
+    s.sin_errores()
+
+
+@prueba('supabase')
+def admin_arma_el_sms_de_la_invitacion(banco: Banco) -> None:
+    """Invitados → Mandar la invitación: Mensajes se abre con el enlace de la invitación (y con el nombre y el teléfono si se escriben); nada de eso se guarda ni sale del dispositivo."""
+    n = Noche(banco.db, 3, lobby=False, aprobar=False)
+    s = panel(banco, n, 'Invitados')
+    s.pagina.context.grant_permissions(['clipboard-read', 'clipboard-write'])
+    salieron: list[str] = []
+    s.pagina.on('request', lambda r: salieron.append(f'{r.url} {r.post_data or ""}'))
+    enlace = s.pagina.evaluate('location.origin') + '/'
+    cabecera = 'Mariela cumple 29: hay fiesta en la CDMX y alguien no va a salir viva. XOXO'
+    vista = s.pagina.locator('.ad-mensaje')
+    sms = s.pagina.get_by_role('link', name='Mandar por SMS')
+
+    def sms_resuelto() -> dict:
+        """El enlace como lo lee el teléfono: a quién (la ruta), el texto (el parámetro body) y lo que se le quedó de fragmento, que si todo
+        está bien escapado es nada (un «#» sin escapar en un nombre cortaría el mensaje ahí)."""
+        return s.pagina.evaluate("""() => {
+            const u = new URL(document.querySelector('a.primario').href)
+            return { esquema: u.protocol, para: u.pathname, texto: new URLSearchParams(u.search).get('body'), fragmento: u.hash }
+        }""")
+
+    # Sin escribir nada: el texto lleva el enlace de la invitación y Mensajes se abre sin destinatario.
+    expect(vista).to_be_visible()
+    assert vista.inner_text() == f'{cabecera}\nTu invitación: {enlace}', vista.inner_text()
+    assert sms.get_attribute('href').startswith('sms:?&body='), 'el «?&» lo entienden iOS y Android'
+    assert sms_resuelto() == {'esquema': 'sms:', 'para': '', 'texto': f'{cabecera}\nTu invitación: {enlace}', 'fragmento': ''}
+    assert enlace.startswith('http://127.0.0.1'), 'en las pruebas el panel corre en local'
+    ver(s, '.ad-ayuda.error[role=note]', 'solo lo abre este dispositivo')  # un enlace local no lo abre nadie más: la tarjeta lo avisa
+
+    # Con un nombre difícil: el texto llega entero (un «&» o un «#» no lo cortan).
+    nombre = 'Ana & Luis #1? ñandú'
+    s.pagina.fill('#inv-nombre', nombre)
+    esperado = f'{cabecera}\n{nombre}, tu invitación: {enlace}'
+    assert vista.inner_text() == esperado, vista.inner_text()
+    assert sms_resuelto() == {'esquema': 'sms:', 'para': '', 'texto': esperado, 'fragmento': ''}
+
+    # Los teléfonos se escriben como sea; los mismos casos que prueba el script de Python.
+    casos = json.loads((RAIZ / 'scripts' / 'casos_telefonos.json').read_text(encoding='utf-8'))
+    campo = s.pagina.locator('#inv-telefono')
+    for crudo, e164 in casos['validos'].items():
+        campo.fill(crudo)
+        expect(sms).to_have_attribute('href', re.compile(f'^sms:{re.escape(e164)}\\?&body='))
+        expect(campo).not_to_have_attribute('aria-invalid', 'true')
+        assert sms_resuelto() == {'esquema': 'sms:', 'para': e164, 'texto': esperado, 'fragmento': ''}
+    for malo in casos['invalidos']:
+        campo.fill(malo)
+        expect(campo).to_have_attribute('aria-invalid', 'true')
+        ver(s, '#inv-ayuda', 'no parece válido')
+        expect(sms).to_have_count(0)
+        expect(s.pagina.get_by_role('button', name='Mandar por SMS')).to_be_disabled()
+    campo.fill('55 1234 5678')
+    expect(sms).to_have_attribute('href', re.compile(r'^sms:\+525512345678\?&body='))
+    ver(s, '#inv-ayuda', 'Nada de esto se guarda')
+
+    # Copiar el mensaje o solo el enlace.
+    s.pagina.get_by_role('button', name='Copiar mensaje').click()
+    toast(s, 'Mensaje copiado')
+    assert s.pagina.evaluate('navigator.clipboard.readText()') == esperado
+    s.pagina.get_by_role('button', name='Copiar enlace', exact=True).click()
+    toast(s, 'Enlace copiado')
+    assert s.pagina.evaluate('navigator.clipboard.readText()') == enlace
+
+    # Compartir solo sale donde el navegador sabe compartir; cerrar el menú sin elegir nada no es un error.
+    def compartir_con(valor_js: str) -> None:
+        """Pone en navigator.share lo que diga `valor_js`: una función, o undefined (donde el navegador no sabe compartir)."""
+        s.pagina.evaluate(f"() => Object.defineProperty(navigator, 'share', {{ value: {valor_js}, configurable: true }})")
+
+    compartir_con('undefined')
+    s.pagina.fill('#inv-nombre', nombre + ' ')  # un cambio cualquiera para que la tarjeta se vuelva a pintar
+    expect(s.pagina.get_by_role('button', name='Compartir…')).to_have_count(0)
+    s.pagina.evaluate('() => { window.__compartido = [] }')
+    compartir_con('async d => { window.__compartido.push(d) }')
+    s.pagina.fill('#inv-nombre', nombre)
+    s.pagina.get_by_role('button', name='Compartir…').click()
+    esperar(s.pagina, 'window.__compartido.length === 1')
+    assert s.pagina.evaluate('window.__compartido') == [{'text': esperado}]
+    compartir_con("async () => { throw new DOMException('cerró el menú', 'AbortError') }")
+    s.pagina.get_by_role('button', name='Compartir…').click()
+    s.pagina.wait_for_timeout(400)
+    assert s.pagina.locator('.avisos .aviso-toast.error').count() == 0
+    compartir_con("async () => { throw new Error('no se pudo') }")
+    s.pagina.get_by_role('button', name='Compartir…').click()
+    toast(s, 'No pude abrir el menú de compartir')
+
+    # Nada de lo que se escribió se guardó ni se mandó a ningún lado.
+    guardado = s.pagina.evaluate("JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage), document.cookie])")
+    for dato in ('5512345678', '55 1234 5678', 'ñandú', 'Ana & Luis'):
+        assert dato not in guardado, f'{dato} no debe quedar en el almacenamiento del navegador'
+    todo = ' '.join(salieron)
+    for dato in ('5512345678', '55 1234 5678', urllib.parse.quote('ñandú'), urllib.parse.quote('Ana & Luis'), 'Ana+%26+Luis', 'tu invitaci'):
+        assert dato not in todo, f'{dato} no debe salir del dispositivo'
     s.sin_errores()
 
 

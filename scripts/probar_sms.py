@@ -132,30 +132,27 @@ def archivo(carpeta: str, texto: str, nombre: str = 'contactos.csv') -> Path:
 # ------------------------------------------------------------------------------------------------- pruebas
 @prueba
 def los_telefonos_se_normalizan() -> None:
-    casos = {
-        '55 1234 5678': '+525512345678',
-        '(55) 1234-5678': '+525512345678',
-        '5512345678': '+525512345678',
-        '+52 55 1234 5678': '+525512345678',
-        '+52 1 55 1234 5678': '+525512345678',  # el 1 de los celulares ya no se marca
-        '52 55 1234 5678': '+525512345678',
-        '521 55 1234 5678': '+525512345678',
-        '044 55 1234 5678': '+525512345678',
-        '045 55 1234 5678': '+525512345678',
-        '  222 123 4567 ': '+522221234567',
-        '+1 (415) 555-0100': '+14155550100',
-        '001 415 555 0100': '+14155550100',
-        '+44 20 7946 0958': '+442079460958',
-    }
-    for crudo, esperado in casos.items():
+    # Los mismos casos que usa la prueba de la interfaz (la tarjeta del admin tiene su propia versión en TypeScript).
+    casos = json.loads((RAIZ / 'scripts' / 'casos_telefonos.json').read_text(encoding='utf-8'))
+    for crudo, esperado in casos['validos'].items():
         assert normalizar_telefono(crudo) == esperado, (crudo, normalizar_telefono(crudo))
-    for malo in ['', '   ', 'abc', '1234', '55 1234 567', '+52 55 1234 567', '55 1234 56789', '+0 555', '+123']:
+    for malo in ['', '   ', *casos['invalidos']]:
         assert normalizar_telefono(malo) is None, malo
     assert normalizar_telefono('415 555 0100', pais='1') == '+14155550100'
     assert normalizar_telefono('1 415 555 0100', pais='1') == '+14155550100'
     assert enviar_sms.bonito('+525512345678') == '+52 55 1234 5678'
     assert enviar_sms.bonito('+522221234567') == '+52 222 123 4567'
     assert enviar_sms.bonito('+14155550100') == '+14155550100'
+
+
+@prueba
+def el_script_y_la_tarjeta_del_admin_mandan_el_mismo_mensaje() -> None:
+    # La tarjeta «Mandar la invitación» (TypeScript) y este script arman el mismo texto: si uno cambia, la prueba obliga a cambiar el otro.
+    fuente = (RAIZ / 'src' / 'lib' / 'invitacionSms.ts').read_text(encoding='utf-8')
+    primera, segunda = MENSAJE.split('\n')
+    assert primera in fuente, 'la primera línea del mensaje ya no coincide con src/lib/invitacionSms.ts'
+    assert segunda == '{nombre}, tu invitación: {url}', 'cambió el saludo del script: revisa también la tarjeta'
+    assert "${quien ? `${quien}, tu invitación` : 'Tu invitación'}: ${enlace}`" in fuente, 'el saludo y el enlace ya no coinciden con los del script'
 
 
 @prueba

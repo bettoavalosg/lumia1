@@ -10,7 +10,7 @@ La invitación de cumpleaños y el juego del "asesino" en vivo para unas 20 pers
 | --- | --- |
 | `/` | La invitación (sobre, sello, RSVP). Cuando el admin abre la puerta, se convierte en el juego de cada invitado: antesala, carta, ronda, votación, veredicto, bitácora. |
 | `/tv` | La pantalla para proyectar: cuenta regresiva grande, votación, veredictos, secretos y muertes. |
-| `/admin` | El panel del admin (PIN): puerta, reparto, pausa, invitados, secretos, ajustes y modo ensayo. |
+| `/admin` | El panel del admin (PIN): puerta, reparto, pausa, invitados (y mandarles la invitación por SMS), secretos, ajustes y modo ensayo. |
 | `/demo` | Un simulador: dos teléfonos, la tele y los controles sobre un mismo servidor de mentiras, con bots. Sirve para probar la noche completa sin nadie más. |
 
 ## Probarla ahora mismo (sin Supabase)
@@ -83,12 +83,21 @@ La función no se expone al público: sin el secreto compartido responde 403, y 
 
 La invitación es un enlace: `https://tu-dominio.com`. Mandarla por SMS es mandar ese enlace en un mensaje. En iMessage suele salir con la vista previa del sobre sellado; en un SMS normal es solo el texto del enlace.
 
-**Para unos 20 amigos, lo más confiable es mandarlo tú desde tu teléfono**: el mensaje sale de un número que conocen, sin filtros de spam y sin cuentas que pagar. Algo como:
+**Desde el panel (lo más fácil, y funciona desde tu teléfono)**: entra a `/admin` con tu PIN, desde el dominio de la invitación, y ve a **Invitados → Mandar la invitación**.
+
+- **Mandar por SMS** abre tu app de Mensajes con el texto y el enlace ya escritos: eliges a quién y mandas. Sale de tu número, así que te reconocen, sin filtros de spam, sin cuentas y sin costo extra. Allí mismo puedes cambiar lo que quieras antes de mandarlo.
+- Si escribes su nombre, el mensaje lo saluda; si escribes su teléfono (como sea: `55 1234 5678`, `+52 1 33…`), se abre directo el chat de esa persona. Nada de eso se guarda ni sale de tu teléfono.
+- **Compartir…** abre el menú de compartir del teléfono (WhatsApp, Mensajes…); solo sale donde el navegador sabe compartir. **Copiar mensaje** y **Copiar enlace** son por si prefieres pegarlo donde sea.
+- Abre el panel desde el dominio de la invitación (el de Vercel), no desde `localhost` ni desde una dirección de tu red: la tarjeta te avisa, porque ese enlace no lo abre nadie más.
+
+El mensaje, tal cual:
 
 > Mariela cumple 29: hay fiesta en la CDMX y alguien no va a salir viva. XOXO
 > Ana, tu invitación: https://tu-dominio.com
 
-**Si prefieres que salgan solos**, `scripts/enviar_sms.py` los manda por Twilio, uno por uno y con el nombre de cada quien. Corre en tu computadora y solo usa la biblioteca estándar de Python: los teléfonos no pasan por la app ni por Supabase, y las llaves de Twilio no están en el front.
+No lleva la dirección: se revela desde la app a la hora que fijes.
+
+**Si prefieres que salgan solos y todos a la vez**, `scripts/enviar_sms.py` los manda por Twilio desde tu computadora, uno por uno y con el nombre de cada quien. Solo usa la biblioteca estándar de Python: los teléfonos no pasan por la app ni por Supabase, y las llaves de Twilio no están en el front.
 
 1. Crea una cuenta en Twilio y consigue un número que mande SMS (o un *Messaging Service*). Una cuenta de prueba solo manda a números que hayas verificado en su consola. Revisa que México esté activado en *Messaging → Settings → Geo permissions*.
 2. Arma `contactos.csv` con una fila por invitado. Está en el `.gitignore` (como `contactos*.csv`, `invitados*.csv` y `*.envios.csv`): son datos personales, no los subas.
@@ -217,13 +226,13 @@ npm install
 | Comando | Qué comprueba |
 | --- | --- |
 | `python scripts/probar_motor.py` | **73 pruebas del servidor** contra un Postgres real (temporal): seguridad, reparto, votación, empates, veredictos, muertes, ranking, admin, ensayo, push (incluidos los avisos de la puerta y la dirección, una sola vez), concurrencia, que `setup.sql` se pueda volver a pegar y que la limpieza final borre a todos. Se validaron también con mutaciones (se rompe una regla a propósito y la prueba tiene que fallar). |
-| `python scripts/probar_juego.py` | **27 pruebas de interfaz** de la noche: antesala y puerta con código, la carta que solo existe mientras se sostiene, votar y el veredicto por partes, fallo/muerte/"Has muerto", desempate, pausa, sin conexión, aviso de Realtime, el service worker de push, la tele que no deja apagar la pantalla, el aviso de un servidor sin configurar, premios, el panel de admin entero y una noche completa jugada contra bots. Además revisa **cada respuesta que recibe cada teléfono y la tele** para que no lleve nada que no debe. |
+| `python scripts/probar_juego.py` | **28 pruebas de interfaz** de la noche: antesala y puerta con código, la carta que solo existe mientras se sostiene, votar y el veredicto por partes, fallo/muerte/"Has muerto", desempate, pausa, sin conexión, aviso de Realtime, el service worker de push, la tele que no deja apagar la pantalla, el aviso de un servidor sin configurar, premios, el panel de admin entero (con la tarjeta de mandar la invitación por SMS: el enlace `sms:` que lee el teléfono, los teléfonos como se escriban, compartir y copiar, y que nada se guarde) y una noche completa jugada contra bots. Además revisa **cada respuesta que recibe cada teléfono y la tele** para que no lleve nada que no debe. |
 | `python scripts/probar_invitacion.py` | 23 pruebas de la invitación: sello, carta, RSVP real, llave, calendario, dirección, sin red, teclado, movimiento reducido, 320 px. |
 | `python scripts/probar_pantallas.py` | Ninguna pantalla se desborda ni deja controles imposibles de tocar: teléfono de 320 px, tableta, escritorio y la tele (con 17 nombres de 40 caracteres, lo más apretado posible, y con una fiesta normal de 20; y que la tele achicada no parpadee). |
 | `python scripts/probar_accesibilidad.py` | Las mismas pantallas con axe-core (WCAG 2.2 AA). |
 | `python scripts/comparar_prototipo.py` | La invitación contra el prototipo aprobado: mismo texto, mismo aspecto. |
 | `python scripts/ensayo.py --local` | El ensayo general con 20 invitados simulados (también contra tu proyecto real; ver arriba). |
-| `python scripts/probar_sms.py` | 15 pruebas del envío por SMS contra un Twilio de mentiras (no manda nada ni pide cuenta): teléfonos, conteo de SMS, el ensayo, el formato exacto de lo que recibe Twilio, no repetir envíos, errores, interrupciones y que los números no lleguen al repo. También validadas con mutaciones. |
+| `python scripts/probar_sms.py` | 16 pruebas del envío por SMS contra un Twilio de mentiras (no manda nada ni pide cuenta): teléfonos, conteo de SMS, el ensayo, el formato exacto de lo que recibe Twilio, no repetir envíos, errores, interrupciones, que el script y la tarjeta del admin manden el mismo texto y que los números no lleguen al repo. También validadas con mutaciones. |
 
 `python scripts/probar_todo.py` corre todas seguidas (compila una sola vez) y al final resume cuáles pasaron; con `--solo` o `--saltar` eliges pasos.
 
@@ -235,6 +244,7 @@ Otras herramientas: `python scripts/servidor_local.py` levanta la API en tu comp
 
 - **Safari de iOS y Chrome de Android reales**, ni lectores de pantalla: los teléfonos son emulaciones de Chromium.
 - **Supabase de verdad**: Realtime (`realtime.send` desde la base) y los envíos de Web Push a los servicios de Apple y Google. El cliente de Realtime se probó contra un servidor de mentiras que habla el mismo protocolo (tramas binarias y JSON), y el service worker recibió pushes entregados por el navegador; pero el primer ensayo en tu proyecto, con `scripts/ensayo.py` y tus propios teléfonos, es el que cierra el círculo. Si Realtime o el push fallaran, el juego no se cae: consulta cada 3 s.
+- **El botón «Mandar por SMS» en un iPhone o un Android reales**: se probó que el enlace `sms:` lleve el destinatario y el texto entero bien escapado (con `&`, `#`, acentos), pero no que tu Mensajes lo abra. Si el tuyo no lo hace, usa *Compartir…* o *Copiar mensaje*.
 - **Twilio de verdad**: `scripts/enviar_sms.py` se probó contra un servidor local que contesta con el mismo formato que la API de mensajes de Twilio (ruta, autenticación, campos, errores y respuestas cortadas), pero no mandó ningún SMS. La primera vez, mándate uno a ti con `--solo`.
 
 ## Estructura

@@ -3,6 +3,7 @@ import { useAvisos } from '../compartido/Avisos'
 import { Hoja } from '../compartido/Hoja'
 import type { InvitadoAdmin } from '../servidor/tipos'
 import { Confirmar, copiar, Seccion, useAdmin } from './comun'
+import { MandarInvitacion } from './MandarInvitacion'
 
 const enlaceDeLlave = (nombre: string, llave: string) => `${location.origin}/?nombre=${encodeURIComponent(nombre)}&llave=${encodeURIComponent(llave)}`
 
@@ -43,6 +44,8 @@ export function Invitados() {
 
   return (
     <>
+      <MandarInvitacion />
+
       <Seccion titulo="Invitados" nota={`${presentes} presentes de ${a.players.length}${humanos.length !== a.players.length ? ` (${a.players.length - humanos.length} bots)` : ''}.`}>
         <div className="campo">
           <label htmlFor="busca">Buscar</label>
