@@ -125,6 +125,7 @@ begin
                'id', p.id, 'name', p.name, 'checked_in', p.checked_in, 'bot', p.is_bot,
                'has_secret', exists (select 1 from app.secrets s where s.author_id = p.id),
                'push', p.push_subscription is not null,
+               'device', p.token_hash is not null,
                'in_game', r.player_id is not null, 'alive', r.alive) order by p.created_at), '[]'::jsonb)
         from app.players p
         left join app.roles r on r.game_id = v_game.id and r.player_id = p.id),
@@ -184,6 +185,7 @@ begin
       starts_at = case when p_changes ? 'starts_at' then (p_changes->>'starts_at')::timestamptz else starts_at end,
       address = case when p_changes ? 'address' then nullif(btrim(p_changes->>'address'), '') else address end,
       address_reveal_at = case when p_changes ? 'address_reveal_at' then nullif(p_changes->>'address_reveal_at', '')::timestamptz else address_reveal_at end,
+      address_notified_at = case when p_changes ? 'address_reveal_at' then null else address_notified_at end,
       round_seconds = case when p_changes ? 'round_seconds' then (p_changes->>'round_seconds')::int else round_seconds end,
       vote_seconds = case when p_changes ? 'vote_seconds' then (p_changes->>'vote_seconds')::int else vote_seconds end,
       tiebreak_seconds = case when p_changes ? 'tiebreak_seconds' then (p_changes->>'tiebreak_seconds')::int else tiebreak_seconds end,
@@ -214,6 +216,7 @@ language plpgsql volatile security definer set search_path = pg_temp as
 $fn$
 declare
   v_game app.games;
+  v_previa text;
 begin
   perform app.lock();
   perform app.require_admin(p_session);
@@ -224,7 +227,12 @@ begin
   if found and v_game.ended_at is null then
     perform app.fail('partida_en_curso', 'Hay una partida en curso. Termina la noche primero.');
   end if;
+  select phase into v_previa from app.event where id = 1;
   update app.event set phase = p_phase, paused_at = null where id = 1;
+  if p_phase = 'lobby' and v_previa <> 'lobby' then
+    perform app.enqueue_push(array(select id from app.players where not checked_in), 'La puerta está abierta',
+                             'Ya puedes marcar "Estoy aquí" cuando llegues.', 'puerta');
+  end if;
   perform app.touch();
   return jsonb_build_object('ok', true);
 end
@@ -454,7 +462,7 @@ $fn$;
 -- ---------------------------------------------------------------------------------------------------
 -- Ensayo: bots, reloj adelantable, reinicio y vista de depuración.
 -- ---------------------------------------------------------------------------------------------------
-create or replace function public.admin_rehearsal(p_session text, p_action text, p_value int default null) returns jsonb
+create or replace function public.admin_rehearsal(p_session text, p_action text, p_value int default null, p_player uuid default null) returns jsonb
 language plpgsql volatile security definer set search_path = pg_temp as
 $fn$
 declare
@@ -494,6 +502,7 @@ declare
   v_about text;
   v_added int := 0;
   v_result jsonb;
+  v_token text;
 begin
   perform app.lock();
   perform app.require_admin(p_session);
@@ -539,6 +548,15 @@ begin
            paused_at = null, clock_offset = interval '0'
      where id = 1;
     v_result := jsonb_build_object('ok', true);
+
+  elsif p_action = 'impersonate' then
+    -- Un token nuevo para jugar como esa persona (el simulador lo usa para mostrar su teléfono).
+    v_token := translate(encode(extensions.gen_random_bytes(32), 'base64'), '+/=', '-_');
+    update app.players set token_hash = app.hash(v_token) where id = p_player;
+    if not found then
+      perform app.fail('no_existe', 'Ese invitado ya no existe.');
+    end if;
+    return jsonb_build_object('ok', true, 'token', v_token);
 
   elsif p_action = 'god' then
     -- Solo para depurar en ensayo: roles y votos de la ronda actual.

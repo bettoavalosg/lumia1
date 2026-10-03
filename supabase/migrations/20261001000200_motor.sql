@@ -496,6 +496,29 @@ begin
 end
 $fn$;
 
+-- La dirección se revela a su hora: quien tenga los avisos activados se entera sin abrir la app. Una sola vez por hora de revelado.
+create or replace function app.avisar_direccion() returns void
+language plpgsql set search_path = pg_temp as
+$fn$
+begin
+  if not exists (select 1 from app.event e
+                  where e.address is not null and e.address_reveal_at is not null
+                    and e.address_reveal_at <= app.now() and e.address_notified_at is null) then
+    return;
+  end if;
+  perform app.lock();
+  -- Con el candado tomado se vuelve a comprobar: veinte teléfonos consultando a la vez avisan una sola vez.
+  update app.event set address_notified_at = app.now()
+   where id = 1 and address is not null and address_reveal_at is not null
+     and address_reveal_at <= app.now() and address_notified_at is null;
+  if found then
+    perform app.enqueue_push(array(select id from app.players), 'Ya sabes dónde es',
+                             'La dirección se reveló. Ábrela en la invitación.', 'direccion');
+    perform app.touch();
+  end if;
+end
+$fn$;
+
 -- Barato: solo entra al candado si hay algo vencido. Lo llaman los clientes al consultar su estado.
 create or replace function app.advance_if_due() returns void
 language plpgsql set search_path = pg_temp as
@@ -504,6 +527,7 @@ declare
   v_now timestamptz := app.now();
   v_due boolean;
 begin
+  perform app.avisar_direccion();
   select exists (
     select 1
       from app.event e

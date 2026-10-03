@@ -36,6 +36,8 @@ create table if not exists app.event (
   version            bigint not null default 0,
   updated_at         timestamptz not null default now()
 );
+-- Cuándo se avisó por push que la dirección ya se reveló (una vez por hora de revelado; se borra al cambiarla).
+alter table app.event add column if not exists address_notified_at timestamptz;
 insert into app.event (id) values (1) on conflict do nothing;
 
 -- ---------------------------------------------------------------------------------------------------

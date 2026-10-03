@@ -1,0 +1,15 @@
+# Configuración para el CLI de Supabase (`supabase link`, `supabase db push`, `supabase functions deploy`).
+# No hace falta si prefieres pegar supabase/setup.sql en el SQL Editor: ver README.
+project_id = "mariela-29"
+
+[api]
+enabled = true
+# Solo `public`: el esquema `app` (todas las tablas) nunca se expone por la API.
+schemas = ["public"]
+
+[db]
+major_version = 15
+
+[functions.enviar-push]
+# La llama Postgres con un secreto propio (x-push-secret), no con un JWT.
+verify_jwt = false
